@@ -1,0 +1,11 @@
+{
+    "battery_capacity_wh": 5000,
+    "channel_config": {
+        "A": 100,
+        "B": 200,
+        "C": 150,
+        "D": 300
+    },
+    "duration_minutes": 10,
+    "battery_protection_threshold": 10
+}
