@@ -1,11 +1,65 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="kor">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <style>
+    .page {
+        display: none;
+    }
+    .page.active {
+        display: block;
+    }
+    .top-nav{
+        background-color: #FFD900;
+
+    }
+    .top-nav button{
+        background-color: rgba(0,0,0,0);
+        border: 0;
+    }
+    .top-nav button.active {
+        font-weight: bold;
+    }
+    </style>
 </head>
+
 <body>
+    <div class="top-nav">
+        <button data-page="1_home" class="active" onclick="showPage('1_home')">HOME</button>
+        <button data-page="2_arduino" onclick="showPage('2_arduino')">ARDUINO</button>
+        <button data-page="3_sem" onclick="showPage('3_sem')">S.E.M</button>
+        <button data-page="4_team" onclick="showPage('4_team')">TEAM</button>
+    </div>
     
+    <div id="1_home" class="page active">
+        <h1>Solar ESS Manager<br>S.E.M</h1>
+        <img src="../img/yellow.png", width="200px", height="200px"/>
+        <img src="../img/gray.png", width="200px", height="200px"/>
+    </div>
+    <div id="2_arduino" class="page">
+        <h1>Arduino<br>Structure</h1>
+    </div>
+    <div id="3_sem" class="page">
+        <h1>S.E.M<br>Controll System</h1>
+    </div>
+    <div id="4_team" class="page">
+        <h1>Team</h1>
+    </div>
 </body>
+
+<script>
+    function showPage(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+        document.querySelectorAll('.top-nav button').forEach(btn => {  // 수정됨!
+            if (btn.dataset.page === pageId) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+    }
+</script>
 </html>
