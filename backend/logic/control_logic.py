@@ -110,7 +110,7 @@ def get_available_channels(battery, power, selected_channels=[], channel_config=
     if battery < battery_protection_threshold:
         print(f"배터리 잔량이 {battery_protection_threshold} % 미만이므로 판매가 불가합니다.")
         return {
-            "A": False,
+            "A": True,
             "B": False,
             "C": False,
             "D": False
