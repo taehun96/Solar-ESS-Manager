@@ -1,9 +1,9 @@
-# RandomForest 모델 테스트
+# GradientBoosting 모델 테스트
 
 # 라이브러리 불러오기
 import pandas as pd
 from sklearn.model_selection import train_test_split # Train / Valid / Test 데이터 분할
-from sklearn.ensemble import RandomForestRegressor # 모델 생성 / 학습
+from sklearn.ensemble import GradientBoostingRegressor # 모델 생성 / 학습
 from sklearn.metrics import root_mean_squared_error, r2_score # 예측 / 평가
 
 # 데이터 불러오기
@@ -36,14 +36,16 @@ print("Test :", X_test.shape)
 
 # 하이퍼 파라미터 튜닝
 n_estimators = 300 # 사용되는 트리 개수
-max_depth = 25 # 트리의 깊이
-min_samples_split = 10 # 노드 분할을 위한 샘플 수
-min_samples_leaf = 5 # 트리 끝 노드의 최소 샘플 수
+max_depth = 20 # 트리의 깊이
+learning_rate = 0.01 # 학습률
+min_samples_split = 20
+min_samples_leaf = 20
 
 # 모델 생성
-model = RandomForestRegressor(
+model = GradientBoostingRegressor(
     n_estimators=n_estimators, 
     max_depth=max_depth,
+    learning_rate=learning_rate,
     min_samples_split=min_samples_split,
     min_samples_leaf=min_samples_leaf,
     random_state=42 # 랜덤 요소 고정
@@ -68,6 +70,7 @@ print("========== 하이퍼 파라미터 ==========\n")
 
 print(f"n_estimators : {n_estimators}")
 print(f"max_depth : {max_depth}")
+print(f"learning_rate : {learning_rate}")
 print(f"min_samples_split : {min_samples_split}")
 print(f"min_samples_leaf : {min_samples_leaf}")
 
