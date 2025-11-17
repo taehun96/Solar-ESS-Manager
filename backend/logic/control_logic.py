@@ -37,7 +37,6 @@ def _init_power(battery, power, channel_config=None, duration_minutes=None):
 # 최적 판매 조합 추천 함수
 #TODO 반환 형식 처리 / 경우에 따라 리스트 -> 딕셔너리
 #TODO config 파일 업데이트 (현재는 테스트용 값 적용)
-#TODO 배터리 용량 mWh 기준으로 변경
 def get_optimal_combination(battery, power, channel_config=None, duration_minutes=None):
     """
     매개변수
