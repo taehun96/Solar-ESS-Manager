@@ -1,0 +1,9 @@
+# 데이터 저장용 폴더
+data/
+# os 및 파일 캐시
+.DS_Store
+__pycache__/
+.ipynb_checkpoints/
+*.pyc
+# 보안 파일
+.env
