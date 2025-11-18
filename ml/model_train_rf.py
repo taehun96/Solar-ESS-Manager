@@ -9,7 +9,7 @@ import pickle # 모델 저장
 import json
 
 # config.json 불러오기
-with open("config_rf.json") as f:
+with open("config.json") as f:
     config = json.load(f)
 
 # config 데이터 가져오기
@@ -19,7 +19,7 @@ min_samples_split = config["min_samples_split"] # 노드 분할을 위한 샘플
 min_samples_leaf = config["min_samples_leaf"] # 트리 끝 노드의 최소 샘플 수
 
 # 데이터 불러오기
-df = pd.read_csv("../data/total_data.csv")
+df = pd.read_csv("data/total_data.csv")
 print("========== 데이터 로드 성공 ==========\n")
 
 # 데이터 확인
@@ -61,32 +61,32 @@ print("Test :", X_test.shape)
 model = RandomForestRegressor(random_state=42) # 랜덤 요소 고정
 
 # 파라미터 그리드 정의
-param_grid = {
-    "n_estimators": n_estimators,
-    "max_depth": max_depth,
-    "min_samples_split": min_samples_split,
-    "min_samples_leaf": min_samples_leaf
-}
+# param_grid = {
+#     "n_estimators": n_estimators,
+#     "max_depth": max_depth,
+#     "min_samples_split": min_samples_split,
+#     "min_samples_leaf": min_samples_leaf
+# }
 
 # 그리드 서치 생성
-grid_search = GridSearchCV(
-    model,
-    param_grid,
-    cv=5,
-    scoring="r2",
-    verbose=2
-)
+# grid_search = GridSearchCV(
+#     model,
+#     param_grid,
+#     cv=5,
+#     scoring="r2",
+#     verbose=2
+# )
 
-print("\n========== GridSearch 시작 ==========\n")
-print("최적 파라미터 탐색 중....\n")
+# print("\n========== GridSearch 시작 ==========\n")
+# print("최적 파라미터 탐색 중....\n")
 
 # 학습 시작
-grid_search.fit(X_train, y_train)
+model.fit(X_train, y_train)
 
 # 최적 모델 가져오기
-model = grid_search.best_estimator_
-print(f"최적 파라미터 : {grid_search.best_params_}")
-print(f"최고 CV 점수 : {grid_search.best_score_:.4f}")
+# model = grid_search.best_estimator_
+# print(f"최적 파라미터 : {grid_search.best_params_}")
+# print(f"최고 CV 점수 : {grid_search.best_score_:.4f}")
 
 print("\n========== 모델 생성 완료 ==========\n")
 
