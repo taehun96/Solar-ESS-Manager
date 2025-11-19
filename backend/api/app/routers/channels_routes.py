@@ -1,5 +1,5 @@
-# 최적조합 추천 및 선택가능 채널 확인 로직
-from backend.logic.control_logic import get_available_channels, get_optimal_combination
+# 최적조합 추천 및 선택가능 채널 확인 로직 API
+from logic.control_logic import get_available_channels, get_optimal_combination
 from app.db import get_connection, close_connection
 from flask import Blueprint, jsonify
 import traceback
@@ -8,7 +8,7 @@ import traceback
 channels_bp = Blueprint("channels", __name__)
 
 # 실시간 선택 가능 채널 확인
-@channels_bp.route("/api/channels/available", method=["post"])
+@channels_bp.route("/api/channels/available", methods=["post"])
 def available_channels():
     """
     실시간 선택 가능 채널 확인 및 배터리 보호
@@ -27,9 +27,14 @@ def available_channels():
         sensor_data = cursor.fetchone()
 
         # 현재 사용중인 채널 확인
-        #TODO 사용중인 릴레이 채널 저장 테이블 생성
+        sql = "SELECT relay_name FROM relay_status WHERE status = 'on'"
+        cursor.execute(sql)
+        active_relays = cursor.fetchall()
 
-        result = get_available_channels(battery=sensor_data["soc"], power=sensor_data["solaw_w"])
+        # 채널만 리스트로 추출
+        selected_channels = [relay["relay_name"] for relay in active_relays]
+
+        result = get_available_channels(battery=sensor_data["soc"], power=sensor_data["solar_w"], selected_channels=selected_channels)
 
         return jsonify(result), 200
 
@@ -60,7 +65,7 @@ def optimal_combination():
         cursor.execute(sql)
         sensor_data = cursor.fetchone()
 
-        result = get_optimal_combination(battery=sensor_data["soc"], power=sensor_data["solaw_w"])
+        result = get_optimal_combination(battery=sensor_data["soc"], power=sensor_data["solar_w"])
 
         return jsonify({'channels': result}), 200
 
