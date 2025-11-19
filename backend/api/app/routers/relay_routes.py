@@ -9,7 +9,7 @@ relay_bp = Blueprint('relay', __name__)
 
 # === [POST] /api/control/relay  ===
 # 기능: 웹(프론트엔드)에서 A, B, C, D 릴레이 상태를 한꺼번에 제어
-@relay_bp.route('/api/control/relay', methods=['POST'])
+@relay_bp.route('/api/relay/control', methods=['POST'])
 def control_relay():
     conn, cursor = None, None
     data = request.get_json() # 웹에서 보낸 JSON 수신 (예: {"A": true, "B": false, ...})

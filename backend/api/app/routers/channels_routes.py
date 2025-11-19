@@ -8,7 +8,7 @@ import traceback
 channels_bp = Blueprint("channels", __name__)
 
 # 실시간 선택 가능 채널 확인
-@channels_bp.route("/api/channels/available", methods=["post"])
+@channels_bp.route("/api/channels/available", method=["POST"])
 def available_channels():
     """
     실시간 선택 가능 채널 확인 및 배터리 보호
