@@ -10,7 +10,7 @@ app = create_app()
 # Flask의 'debug=True' 리로더(reloader)가 일으키는 순환 참조 문제를 해결합니다.
 # app.config에 저장해둔 설정값들을 여기서 읽어서 사용합니다.
 socketio.init_app(app, async_mode=app.config['ASYNC_MODE'],
-                     cors_allowed_origins=app.config['CORS_ORIGINS'])
+                    cors_allowed_origins=app.config['CORS_ORIGINS'])
 
 
 # 3. 이 파일(run.py)이 터미널에서 'python run.py'로 직접 실행되었을 때만
