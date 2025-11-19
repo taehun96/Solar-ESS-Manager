@@ -27,16 +27,18 @@ def create_app():
     # --- [3-3] 라우트(API 주소) 및 이벤트 임포트 ---
     # [중요] 순환 참조(Circular Import) 오류를 방지하기 위해
     # app 객체가 완전히 생성된 *이후*에 라우트 파일을 임포트합니다.
-    from app import socket_events # 'events' -> 'socket_events'로 변경
+    # from app import socket_events # 'events' -> 'socket_events'로 변경
 
     # Blueprint 임포트 및 등록
     from app.routers.data_routes import data_bp
     from app.routers.relay_routes import relay_bp
     from app.routers.channels_routes import channels_bp
+    from app.routers.energy_routes import energy_bp
 
     app.register_blueprint(data_bp)
     app.register_blueprint(relay_bp)
     app.register_blueprint(channels_bp) 
+    app.register_blueprint(energy_bp) 
 
     # 생성 및 설정이 완료된 app 객체를 반환합니다.
     return app

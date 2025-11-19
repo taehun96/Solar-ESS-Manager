@@ -1,13 +1,24 @@
 import mysql.connector
+from dotenv import load_dotenv
+import os
 # from mysql.connector import pooling # 커넥션 풀링을 사용하지 않으므로 삭제
+
+# .env 파일 로드
+load_dotenv()
+
+# env 변수 가져오기
+host = os.getenv("DB_HOST")
+user = os.getenv("DB_USER")
+password = os.getenv("DB_PASSWORD")
+database = os.getenv("DB_DATABASE")
 
 def get_connection():
     try:
         conn = mysql.connector.connect(
-            host='localhost',
-            user = 'root',
-            password = '1234',
-            database = 'realtime_db'
+            host= host,
+            user = user,
+            password = password,
+            database = database
         )
         cursor = conn.cursor(dictionary=True) 
         
