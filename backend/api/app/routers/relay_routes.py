@@ -7,6 +7,11 @@ import traceback # 에러 로그 추적을 위해
 # Blueprint 생성
 relay_bp = Blueprint('relay', __name__)
 
+# TODO 기존 control_relay() 함수에서 저장 + 제어 진행 -> 저장 함수 분리
+# DB에 릴레이 상태 저장 함수
+def update_relay_status_in_db():
+    pass
+
 # === [POST] /api/control/relay  ===
 # 기능: 웹(프론트엔드)에서 A, B, C, D 릴레이 상태를 한꺼번에 제어
 @relay_bp.route('/api/relay/control', methods=['POST'])
@@ -16,13 +21,13 @@ def control_relay():
 
     # 1. 데이터 유효성 검사
     if not data or 'A' not in data or 'B' not in data or 'C' not in data or 'D' not in data:
-        return jsonify({'message': 'Bad Request: Missing relay status for A, B, C, or D'}), 400
+        return jsonify({'message': 'Bad Request: 필수 데이터가 누락되었습니다.'}), 400
 
     try:
         # 2. DB 연결
         conn, cursor = get_connection()
         if conn is None:
-            return jsonify({'message': 'DB 연결 실패'}), 500
+            return jsonify({'message': 'DB 연결 실패'}), 503
 
         # [중요] 트랜잭션 시작: 4개의 릴레이 상태를 '전부' 성공하거나 '전부' 실패시킴
         conn.start_transaction()
@@ -50,7 +55,7 @@ def control_relay():
         # 예: send_command_to_arduino(data)
 
         # 6. 웹에게 성공 응답 반환
-        return jsonify({'message': 'success'})
+        return jsonify({'message': 'success'}), 200
 
     except Exception as e:
         # 7. 에러 처리
@@ -58,7 +63,7 @@ def control_relay():
         traceback.print_exc()
         if conn:
             conn.rollback() # [중요] 4개 UPDATE 중 하나라도 실패하면 모두 되돌림
-        return jsonify({'message': 'Internal Server Error'}), 500
+        return jsonify({'message': '서버 오류 발생'}), 500
 
     finally:
         # 8. DB 연결 종료
@@ -74,7 +79,7 @@ def get_all_relay_status():
         # 1. DB 연결
         conn, cursor = get_connection()
         if conn is None:
-            return jsonify({'message': 'DB 연결 실패'}), 500
+            return jsonify({'message': 'DB 연결 실패'}), 503
 
         # 2. SQL 쿼리 실행 (A, B, C, D 모든 릴레이 정보 조회)
         sql = "SELECT relay_name, status FROM relay_status WHERE relay_name IN ('A', 'B', 'C', 'D')"
@@ -89,13 +94,13 @@ def get_all_relay_status():
             status_map[r['relay_name']] = (r['status'] == 'on')
 
         # 4. JSON으로 반환
-        return jsonify(status_map)
+        return jsonify(status_map), 200
 
     except Exception as e:
         # 5. 에러 처리
         print(f"Error in get_all_relay_status: {e}")
         traceback.print_exc()
-        return jsonify({'message': 'Internal Server Error'}), 500
+        return jsonify({'message': '서버 오류 발생'}), 500
 
     finally:
         # 6. DB 연결 종료

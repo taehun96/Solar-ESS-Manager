@@ -19,7 +19,7 @@ def available_channels():
         # DB 연결
         conn, cursor = get_connection()
         if conn is None:
-            return jsonify({"message": "DB 연결 실패"}), 500
+            return jsonify({"message": "DB 연결 실패"}), 503
         
         # 최신 데이터 조회
         sql = "SELECT soc, solar_w FROM sun_data ORDER BY timestamp DESC LIMIT 1"
@@ -41,7 +41,7 @@ def available_channels():
     except Exception as e:
         print(f"Error in check_available_channels: {e}")
         traceback.print_exc()
-        return jsonify({"message": "Internal Server Error"}), 500
+        return jsonify({"message": "서버 오류 발생"}), 500
     
     finally:
         close_connection(conn, cursor)
@@ -58,7 +58,7 @@ def optimal_combination():
         # DB 연결
         conn, cursor = get_connection()
         if conn is None:
-            return jsonify({"message": "DB 연결 실패"}), 500
+            return jsonify({"message": "DB 연결 실패"}), 503
         
         # 최신 데이터 조회
         sql = "SELECT soc, solar_w FROM sun_data ORDER BY timestamp DESC LIMIT 1"
@@ -72,7 +72,7 @@ def optimal_combination():
     except Exception as e:
         print(f"Error in check_available_channels: {e}")
         traceback.print_exc()
-        return jsonify({"message": "Internal Server Error"}), 500
+        return jsonify({"message": "서버 오류 발생"}), 500
     
     finally:
         close_connection(conn, cursor)

@@ -31,7 +31,7 @@ def predict_generation():
         # DB 연결
         conn, cursor = get_connection()
         if conn is None:
-            return jsonify({"message": "DB 연결 실패"}), 500
+            return jsonify({"message": "DB 연결 실패"}), 503
         
         sql = """
             SELECT
@@ -51,7 +51,7 @@ def predict_generation():
         latest_data = cursor.fetchone()
 
         if not latest_data:
-            return jsonify({"message": "No data found"}), 404
+            return jsonify({"message": "데이터가 존재하지 않습니다."}), 404
 
         # 일사량 데이터로 변환
         latest_data["insolation"] = lux_to_insolation(latest_data["lux"])
@@ -77,7 +77,7 @@ def predict_generation():
     except Exception as e:
         print(f"Error in check_available_channels: {e}")
         traceback.print_exc()
-        return jsonify({"message": "Internal Server Error"}), 500
+        return jsonify({"message": "서버 오류 발생"}), 500
     
     finally:
         close_connection(conn, cursor)
