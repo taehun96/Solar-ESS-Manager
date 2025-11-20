@@ -1,4 +1,3 @@
-// EnvSetting.jsx
 import { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 
@@ -12,6 +11,7 @@ function EnvSetting() {
     soc: '',
     solar_w: '',
     lux: '',
+    cashBalance: '',
     relayA: '',
     relayB: '',
     relayC: '',
@@ -26,11 +26,14 @@ function EnvSetting() {
     timestamp: null
   });
 
+  const [currentCash, setCurrentCash] = useState(0);
+
   const BACKEND_URL = 'http://localhost:5000';
   const socket = io(BACKEND_URL, { autoConnect: false });
 
   useEffect(() => {
     checkConnections();
+    loadCashBalance();
     
     socket.on('connect', () => setIsBackendConnected(true));
     socket.on('disconnect', () => setIsBackendConnected(false));
@@ -39,6 +42,16 @@ function EnvSetting() {
 
     return () => socket.disconnect();
   }, []);
+
+  const loadCashBalance = () => {
+    const savedCash = localStorage.getItem('cashBalance');
+    if (savedCash) {
+      setCurrentCash(parseFloat(savedCash));
+    } else {
+      setCurrentCash(48020);
+      localStorage.setItem('cashBalance', '48020');
+    }
+  };
 
   const checkConnections = async () => {
     try {
@@ -148,7 +161,8 @@ function EnvSetting() {
     setCurrentData(resetData);
     localStorage.setItem('solarData', JSON.stringify(resetData));
     localStorage.setItem('cashBalance', '0');
-    setVirtualSettings({ soc: '', solar_w: '', lux: '', relayA: '', relayB: '', relayC: '', relayD: '' });
+    setCurrentCash(0);
+    setVirtualSettings({ soc: '', solar_w: '', lux: '', cashBalance: '', relayA: '', relayB: '', relayC: '', relayD: '' });
     alert('환경이 초기화되었고, 자산도 0원으로 초기화되었습니다.');
   };
 
@@ -197,6 +211,14 @@ function EnvSetting() {
     saveData({ lux: value }); alert(`조도 ${value}lux 설정 완료`);
   };
 
+  const setCashBalance = () => {
+    const value = parseFloat(virtualSettings.cashBalance);
+    if (isNaN(value) || value < 0) { alert('0 이상의 값을 입력하세요'); return; }
+    localStorage.setItem('cashBalance', value.toString());
+    setCurrentCash(value);
+    alert(`현금 잔고 ${value.toLocaleString()}원 설정 완료`);
+  };
+
   const setRelayPower = (relay, power) => {
     const value = parseFloat(power);
     if (isNaN(value) || value < 0) { alert('0 이상의 값을 입력하세요'); return; }
@@ -204,7 +226,16 @@ function EnvSetting() {
   };
 
   const fillDefaultStats = () => {
-    setVirtualSettings({ soc: '80', solar_w: '150', lux: '35000', relayA: '50', relayB: '100', relayC: '75', relayD: '120' });
+    setVirtualSettings({ 
+      soc: '80', 
+      solar_w: '150', 
+      lux: '35000', 
+      cashBalance: '48020',
+      relayA: '50', 
+      relayB: '100', 
+      relayC: '75', 
+      relayD: '120' 
+    });
     alert('기본값으로 설정되었습니다!');
   };
 
@@ -226,6 +257,7 @@ function EnvSetting() {
         <p style={{ margin: '5px 0' }}>배터리: {currentData.soc}%</p>
         <p style={{ margin: '5px 0' }}>발전량: {currentData.solar_w}W</p>
         <p style={{ margin: '5px 0' }}>조도: {currentData.lux}lux</p>
+        <p style={{ margin: '5px 0' }}>현금 잔고: {currentCash.toLocaleString()}원</p>
         <p style={{ margin: '5px 0' }}>
           릴레이: A({currentData.relays.A ? 'ON' : 'OFF'}) B({currentData.relays.B ? 'ON' : 'OFF'}) C({currentData.relays.C ? 'ON' : 'OFF'}) D({currentData.relays.D ? 'ON' : 'OFF'})
         </p>
@@ -264,6 +296,10 @@ function EnvSetting() {
             <div style={{ marginBottom: '15px' }}>
               <input type='number' placeholder='Lux' value={virtualSettings.lux} onChange={(e) => handleInputChange('lux', e.target.value)} style={{ padding: '8px', marginRight: '10px', width: '150px' }} />
               <button onClick={setLux} style={{ padding: '8px 15px', cursor: 'pointer' }}>조도 (lux)</button>
+            </div>
+            <div style={{ marginBottom: '15px' }}>
+              <input type='number' placeholder='원(₩)' value={virtualSettings.cashBalance} onChange={(e) => handleInputChange('cashBalance', e.target.value)} style={{ padding: '8px', marginRight: '10px', width: '150px' }} />
+              <button onClick={setCashBalance} style={{ padding: '8px 15px', cursor: 'pointer' }}>현금 잔고 (원)</button>
             </div>
             {['A', 'B', 'C', 'D'].map(relay => (
               <div key={relay} style={{ marginBottom: '15px' }}>
