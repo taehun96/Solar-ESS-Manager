@@ -1,7 +1,6 @@
 from app.db import get_connection, close_connection
 import traceback
-import json, requests, os
-from pathlib import Path
+import json, os
 from itertools import combinations
 
 # config.json 불러오기

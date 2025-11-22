@@ -1,7 +1,5 @@
 from app.db import get_connection, close_connection
 import traceback
-import json, requests
-from pathlib import Path
 from datetime import datetime
 
 # 최신 센서 데이터 조회
