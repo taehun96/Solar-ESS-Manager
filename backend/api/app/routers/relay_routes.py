@@ -1,102 +1,80 @@
 # ---필요한 모듈 임포트 ---
 from flask import Blueprint, jsonify, request
-from app import socketio # __init__.py에서 생성한 socketio 객체를 임포트
-from app.db import get_connection, close_connection # DB 연결/종료 함수 임포트
-import traceback # 에러 로그 추적을 위해
+from app.services.relay_service import (
+    update_relay_status_in_db,
+    insert_trade_history,
+    get_current_relay_status,
+    send_to_arduino
+)
+from app.services.common_service import get_buyer_id_from_channel, get_channel_power
+from dotenv import load_dotenv
+import os
+
+# .env 파일 로드
+load_dotenv()
+
+# env 변수 가져오기
+arduino_url = os.getenv("ARDUINO_URL")
 
 # Blueprint 생성
 relay_bp = Blueprint('relay', __name__)
 
-# === [POST] /api/control/relay  ===
+# === [POST] /api/relay/control  ===
 # 기능: 웹(프론트엔드)에서 A, B, C, D 릴레이 상태를 한꺼번에 제어
-@relay_bp.route('/api/relay/control', methods=['POST'])
+@relay_bp.route("/api/relay/control", methods=["POST"])
 def control_relay():
-    conn, cursor = None, None
     data = request.get_json() # 웹에서 보낸 JSON 수신 (예: {"A": true, "B": false, ...})
 
-    # 1. 데이터 유효성 검사
-    if not data or 'A' not in data or 'B' not in data or 'C' not in data or 'D' not in data:
-        return jsonify({'message': 'Bad Request: Missing relay status for A, B, C, or D'}), 400
+    # 데이터 유효성 검사
+    if not data or "A" not in data or "B" not in data or "C" not in data or "D" not in data:
+        print("릴레이 유효성 검사 : 필수 데이터 누락")
+        return jsonify({"message": "필수 데이터가 누락되었습니다."}), 400
 
-    try:
-        # 2. DB 연결
-        conn, cursor = get_connection()
-        if conn is None:
-            return jsonify({'message': 'DB 연결 실패'}), 500
+    # 현재 릴레이 상태 조회
+    current_status, message, status_code = get_current_relay_status()
+    if current_status is None:
+        return jsonify({"message": message}), status_code
 
-        # [중요] 트랜잭션 시작: 4개의 릴레이 상태를 '전부' 성공하거나 '전부' 실패시킴
-        conn.start_transaction()
+    # DB 저장 함수 호출
+    success, message, status_code = update_relay_status_in_db(data)
+    if not success:
+        return jsonify({"message": message}), status_code
+    
+    # OFF -> ON 채널만 거래 내역 저장
+    for channel, new_state in data.items():
+        old_state = current_status.get(channel, "off")
+        if old_state == "off" and new_state == True:
+            # 채널명을 buyer_id로 변환
+            buyer_id = get_buyer_id_from_channel(channel)
+            # 채널별 소비전력 조회
+            amount = get_channel_power(channel)
+            if buyer_id and amount:
+                # DB에 거래 내역 저장
+                success, msg, _ = insert_trade_history(buyer_id, amount)
+                if not success:
+                    print(f"거래 내역 저장 실패 ({channel}) : {msg}")
+                else:
+                    print(f"거래 내역 저장 성공 ({channel}) : {amount}W")
 
-        # 3. SQL 쿼리 실행 (A, B, C, D 상태를 각각 UPDATE)
-        relays_to_update = []
-        for relay_name, state_boolean in data.items():
-            # True -> 'on', False -> 'off'
-            status_string = 'on' if state_boolean else 'off'
-            relays_to_update.append((status_string, relay_name)) # (값, 조건) 튜플
+    # 아두이노에 릴레이 제어 전송
+    success, message, status_code = send_to_arduino(data, arduino_url)
+    if not success:
+        return jsonify({"message": message}), status_code
 
-        # 4개의 UPDATE를 한 번에 실행 (executemany)
-        sql = "UPDATE relay_status SET status = %s WHERE relay_name = %s"
-        cursor.executemany(sql, relays_to_update)
-
-        conn.commit() # [중요] 4개 UPDATE를 트랜잭션으로 최종 반영
-
-        # 4. [SocketIO] 실시간 상태 전송
-        # DB 업데이트 성공 시, 웹(프론트엔드)에 'relay_status_update' 이벤트로
-        # 방금 변경된 상태(JSON)를 실시간 전송
-        socketio.emit('relay_status_update', data, namespace='/')
-
-        # 5. [TODO] 아두이노에게 제어 명령 전송
-        # (이 부분은 아두이노가 HTTP GET으로 폴링하거나, MQTT 등을 사용해야 함)
-        # 예: send_command_to_arduino(data)
-
-        # 6. 웹에게 성공 응답 반환
-        return jsonify({'message': 'success'})
-
-    except Exception as e:
-        # 7. 에러 처리
-        print(f"Error in control_relay: {e}")
-        traceback.print_exc()
-        if conn:
-            conn.rollback() # [중요] 4개 UPDATE 중 하나라도 실패하면 모두 되돌림
-        return jsonify({'message': 'Internal Server Error'}), 500
-
-    finally:
-        # 8. DB 연결 종료
-        close_connection(conn, cursor)
+    return jsonify({"message": "success"}), 200
 
 # === [GET] /api/relay/status ===
 # 기능: 웹(프론트엔드)이 페이지에 처음 접속할 때,
 #       DB에 저장된 릴레이의 '현재' 상태를 조회
-@relay_bp.route('/api/relay/status', methods=['GET'])
+@relay_bp.route("/api/relay/status", methods=["GET"])
 def get_all_relay_status():
-    conn, cursor = None, None
-    try:
-        # 1. DB 연결
-        conn, cursor = get_connection()
-        if conn is None:
-            return jsonify({'message': 'DB 연결 실패'}), 500
+    # 현재 릴레이 상태 조회
+    current_status, message, status_code = get_current_relay_status()
 
-        # 2. SQL 쿼리 실행 (A, B, C, D 모든 릴레이 정보 조회)
-        sql = "SELECT relay_name, status FROM relay_status WHERE relay_name IN ('A', 'B', 'C', 'D')"
-        cursor.execute(sql)
-        relays = cursor.fetchall() # (결과 예: [{'relay_name': 'A', 'status': 'on'}, ...])
+    if current_status is None:
+        return jsonify({"message": message}), status_code
+    
+    # 결과 가공 (JSON 형식 변경)
+    status_map = {key: (value == "on") for key, value in current_status.items()}
 
-        # 3. 결과 가공 (JSON 형식 변경)
-        # 님의 요청사항: {'A': True, 'B': False, 'C': True, 'D': False}
-        status_map = {}
-        for r in relays:
-            # 'on'이면 True, 'off'면 False
-            status_map[r['relay_name']] = (r['status'] == 'on')
-
-        # 4. JSON으로 반환
-        return jsonify(status_map)
-
-    except Exception as e:
-        # 5. 에러 처리
-        print(f"Error in get_all_relay_status: {e}")
-        traceback.print_exc()
-        return jsonify({'message': 'Internal Server Error'}), 500
-
-    finally:
-        # 6. DB 연결 종료
-        close_connection(conn, cursor)
+    return jsonify(status_map), 200

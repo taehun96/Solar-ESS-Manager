@@ -3,6 +3,7 @@ from app.db import get_connection, close_connection
 from flask import Blueprint, jsonify
 import traceback, pickle
 import pandas as pd
+from pathlib import Path
 
 # lux -> 일사량 변환
 def lux_to_insolation(lux):
@@ -11,7 +12,7 @@ def lux_to_insolation(lux):
     return mj
 
 # 모델 불러오기
-MODEL_PATH = "../models/rf_best_model.pkl"
+MODEL_PATH = Path(__file__).parent.parent.parent / "models" / "rf_best_model.pkl"
 
 with open(MODEL_PATH, "rb") as f:
     model = pickle.load(f)
@@ -31,7 +32,8 @@ def predict_generation():
         # DB 연결
         conn, cursor = get_connection()
         if conn is None:
-            return jsonify({"message": "DB 연결 실패"}), 500
+            print("모델 예측 : DB 연결 실패")
+            return jsonify({"message": "DB 연결 실패"}), 503
         
         sql = """
             SELECT
@@ -51,7 +53,8 @@ def predict_generation():
         latest_data = cursor.fetchone()
 
         if not latest_data:
-            return jsonify({"message": "No data found"}), 404
+            print("모델 예측 : 데이터가 존재하지 않습니다.")
+            return jsonify({"message": "데이터가 존재하지 않습니다."}), 404
 
         # 일사량 데이터로 변환
         latest_data["insolation"] = lux_to_insolation(latest_data["lux"])
@@ -75,9 +78,9 @@ def predict_generation():
         return jsonify(result), 200
 
     except Exception as e:
-        print(f"Error in check_available_channels: {e}")
+        print(f"모델 예측 서버 오류 : {e}")
         traceback.print_exc()
-        return jsonify({"message": "Internal Server Error"}), 500
+        return jsonify({"message": "서버 오류 발생"}), 500
     
     finally:
         close_connection(conn, cursor)
