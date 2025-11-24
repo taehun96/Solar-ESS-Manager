@@ -16,23 +16,23 @@ def available_channels():
     실시간 선택 가능 채널 확인 및 배터리 보호
     """
     # 최신 센서 데이터 조회
-    sensor_data, error, code = get_latest_sensor_data()
-    if error:
-        return jsonify({"message": error}), code
+    sensor_data, message, status_code = get_latest_sensor_data()
+    if message:
+        return jsonify({"message": message}), status_code
 
     # 현재 사용중인 채널 확인
-    selected_channels, error, code = get_active_relay_list()
-    if error:
-        return jsonify({"message": error}), code
+    selected_channels, message, status_code = get_active_relay_list()
+    if message:
+        return jsonify({"message": message}), status_code
 
     # 가능한 채널 조회
-    result, error, code = get_available_channels(
+    result, message, status_code = get_available_channels(
         battery=sensor_data["soc"],
         power=sensor_data["solar_w"],
         selected_channels=selected_channels
     )
-    if error:
-        return jsonify({"message": error}), code
+    if message:
+        return jsonify({"message": message}), status_code
 
     return jsonify(result), 200
 
@@ -43,16 +43,16 @@ def optimal_combination():
     최적 판매 조합 추천
     """
     # 최신 센서 데이터 조회
-    sensor_data, error, code = get_latest_sensor_data()
-    if error:
-        return jsonify({"message": error}), code
+    sensor_data, message, status_code = get_latest_sensor_data()
+    if message:
+        return jsonify({"message": message}), status_code
 
     # 최적 조합 계산
-    result, error, code = get_optimal_combination(
+    result, message, status_code = get_optimal_combination(
         battery=sensor_data["soc"],
         power=sensor_data["solar_w"]
     )
-    if error:
-        return jsonify({"message": error}), code
+    if message:
+        return jsonify({"message": message}), status_code
 
     return jsonify({'channels': result}), 200

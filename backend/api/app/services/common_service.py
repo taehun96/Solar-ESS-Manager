@@ -20,7 +20,7 @@ def get_channel_power(channel):
     config.json에서 채널별 소비전력 조회
     """
     try:
-        config_path = Path(__file__).parent.parent / "logic" / "config.json"
+        config_path = Path(__file__).parent / "config.json"
         with open(config_path, "r") as f:
             config = json.load(f)
 
