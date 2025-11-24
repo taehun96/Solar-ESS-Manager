@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import turnon from '../../img/yellow_gray.png';
+import './home.css';
 
 function Home() {
   const [currentSection, setCurrentSection] = useState(0);
@@ -71,39 +72,24 @@ function Home() {
     {
       id: 0,
       content: (
-        <div style={{
-          height: '100vh',
-          width: '100vw',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center'
-        }}>
+        <div className="content-container">
           <motion.h1
             key="title-0"
             initial="hidden"
             animate="visible"
             variants={fadeInUpSlow}
-            style={{
-              fontSize: '48px',
-              fontWeight: 'bold',
-              marginBottom: '40px',
-              color: '#333',
-              textAlign: 'center'
-            }}
+            className="hero-title"
           >
-            What is <span style={{ color: '#FFD900' }}>Solar ESS Manager?</span>
+            What is <span className="highlight">Solar ESS Manager?</span>
           </motion.h1>
           <motion.img
             key="img-0"
             initial="hidden"
             animate="visible"
             variants={fadeInUpSlow}
-            whileHover={{ scale: 1.03 }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="hero-img"
             src={turnon}
             alt="yellow_gray"
-            style={{ width: '400px', height: 'auto', maxWidth: '80%', cursor: 'pointer' }}
           />
         </div>
       )
@@ -111,15 +97,9 @@ function Home() {
     {
       id: 1,
       content: (
-        <div style={{
-          height: '100vh',
-          width: '100vw',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center'
-        }}>
-          <h2 style={{ fontSize: '64px', fontWeight: 'bold', textAlign: 'center', color: '#333' }}>
-            INTRODUCING <span style={{ color: '#FFD900' }}>S.E.M</span>
+        <div className="content-container">
+          <h2 className="hero-title">
+            INTRODUCING <span className="highlight">S.E.M</span>
           </h2>
         </div>
       )
@@ -127,16 +107,10 @@ function Home() {
     {
       id: 2,
       content: (
-        <div style={{
-          height: '100vh',
-          width: '100vw',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center'
-        }}>
-          <div style={{ width: '90%', maxWidth: '800px', padding: '60px 40px', border: '2px solid #333', cursor: 'pointer' }}>
-            <h3 style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '30px', textAlign: 'center', color: '#333' }}>프로젝트 개요</h3>
-            <p style={{ fontSize: '20px', lineHeight: '1.8', textAlign: 'center', color: '#666' }}>
+        <div className="content-container">
+          <div className="info-box">
+            <h3>프로젝트 개요</h3>
+            <p>
               Solar ESS Manager(S.E.M)는 태양광 에너지 저장 시스템을 효율적으로 관리하는
               스마트 플랫폼입니다. 실시간 모니터링과 최적화 기능을 제공합니다.
             </p>
@@ -147,19 +121,28 @@ function Home() {
     {
       id: 3,
       content: (
-        <div style={{
-          height: '100vh',
-          width: '100vw',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center'
-        }}>
-          <div style={{ width: '90%', maxWidth: '800px', padding: '60px 40px', border: '2px solid #333', cursor: 'pointer' }}>
-            <h3 style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '30px', textAlign: 'center', color: '#333' }}>진행 과정 및 기술 스택</h3>
-            <p style={{ fontSize: '20px', lineHeight: '1.8', textAlign: 'center', color: '#666' }}>
-              초기 기획 → 데이터 수집 → 알고리즘 개발 → 프론트/백 통합 → 테스트 & 배포<br />
-              사용 기술: React, Node.js, MongoDB
+        <div className="content-container">
+          <div className="info-box">
+            <h3>진행 과정 및 기술 스택</h3>
+            <p>
+              초기 기획 → 데이터 수집 → 알고리즘 개발 → 프론트/백 통합 → 테스트 & 배포
             </p>
+            <table style={{border:'1px'}}>
+              <tbody>
+                <tr>
+                  <td>분류</td>
+                  <td>내용</td>
+                </tr>
+                <tr>
+                  <td>언어</td>
+                  <td>JavaScript, Python</td>
+                </tr>
+                <tr>
+                  <td>프레임워크</td>
+                  <td>React, Express</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       )
@@ -167,19 +150,11 @@ function Home() {
     {
       id: 4,
       content: (
-        <div style={{
-          height: '100vh',
-          width: '100vw',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center'
-        }}>
-          <div style={{ width: '90%', maxWidth: '800px', padding: '60px 40px', border: '2px solid #333', cursor: 'pointer' }}>
-            <h3 style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '30px', textAlign: 'center', color: '#333' }}>팀 소개 | Watt's Up?</h3>
-            <p style={{ fontSize: '20px', lineHeight: '1.8', textAlign: 'center', color: '#666' }}>
-              What's Up? 이라는 문장과 전력단위인 Watt를 더한
-              재치있는 말장난으로, 전력관리의 효율성을 잡겠다는
-              패기가 담긴 이름입니다.
+        <div className="content-container">
+          <div className="info-box">
+            <h3>팀 소개 | Watt's Up?</h3>
+            <p>
+              What's Up? 이라는 문장과 전력단위인 Watt를 더한 재치있는 말장난으로, 전력관리의 효율성을 잡겠다는 패기가 담긴 이름입니다.
             </p>
           </div>
         </div>
@@ -188,16 +163,10 @@ function Home() {
     {
       id: 5,
       content: (
-        <div style={{
-          height: '100vh',
-          width: '100vw',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center'
-        }}>
-          <div style={{ width: '90%', maxWidth: '800px', padding: '60px 40px', border: '2px solid #333', cursor: 'pointer' }}>
-            <h3 style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '30px', textAlign: 'center', color: '#333' }}>팀원소개 / 연락처</h3>
-            <p style={{ fontSize: '20px', lineHeight: '1.8', textAlign: 'center', color: '#666' }}>
+        <div className="content-container">
+          <div className="info-box">
+            <h3>팀원소개 / 연락처</h3>
+            <p>
               팀장/프론트: 오왕경 (hong@example.com)<br />
               머신러닝: 안태현 (kim@example.com)<br />
               백엔드: 이민정 (lee@example.com)<br />
@@ -211,17 +180,11 @@ function Home() {
     {
       id: 6,
       content: (
-        <div style={{
-          height: '100vh',
-          width: '100vw',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center'
-        }}>
-          <div style={{ width: '90%', maxWidth: '800px', padding: '60px 40px', border: '2px solid #333', cursor: 'pointer' }}>
-            <h3 style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '30px', textAlign: 'center', color: '#333' }}>깃허브 레포지토리</h3>
-            <p style={{ fontSize: '20px', lineHeight: '1.8', textAlign: 'center', color: '#666' }}>
-              <a href="https://github.com/example/Solar-ESS-Manager" target="_blank" rel="noreferrer" style={{ color: '#FFD900', textDecoration: 'none' }}>
+        <div className="content-container">
+          <div className="info-box">
+            <h3>깃허브 레포지토리</h3>
+            <p>
+              <a href="https://github.com/example/Solar-ESS-Manager" target="_blank" rel="noreferrer">
                 https://github.com/example/Solar-ESS-Manager
               </a>
             </p>
@@ -232,9 +195,8 @@ function Home() {
   ];
 
   return (
-    <div style={{ position: 'relative', height: '100vh', overflow: 'hidden' }}>
+    <div className="home-container">
       {currentSection === 0 ? (
-        // 첫 섹션은 기존 천천한 fadeInUpSlow 유지
         sections[0].content
       ) : (
         <AnimatePresence custom={direction} mode="wait">
@@ -252,29 +214,12 @@ function Home() {
         </AnimatePresence>
       )}
 
-      {/* 페이지 인디케이터 */}
-      <div style={{
-        position: 'fixed',
-        right: '30px',
-        top: '50%',
-        transform: 'translateY(-50%)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '10px',
-        zIndex: 1000
-      }}>
+      <div className="page-indicator">
         {sections.map((_, i) => (
           <div
             key={i}
+            className={currentSection === i ? 'active' : ''}
             onClick={() => setCurrentSection(i)}
-            style={{
-              width: '12px',
-              height: '12px',
-              border: '2px solid #333',
-              backgroundColor: currentSection === i ? '#FFD900' : 'transparent',
-              cursor: 'pointer',
-              transition: 'background-color 0.3s'
-            }}
           />
         ))}
       </div>

@@ -6,95 +6,109 @@ body {
   padding: 0;
 }
 
-.home-container {
-  width: 90%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 50px 0;
-}
-
-.hero {
-  text-align: center;
-  margin-bottom: 50px;
-}
-
-.hero-title {
-  font-size: 3rem;
-  line-height: 1.2;
-  margin-bottom: 40px;
-  animation: fadeIn 1s ease forwards;
-}
-
-.highlight {
-  color: #ffb400;
-}
-
-.hero-images {
+/* 공통 컨테이너 */
+.content-container {
+  height: 100vh;
+  width: 100vw;
   display: flex;
   justify-content: center;
-  gap: 40px;
+  align-items: center;
+  flex-direction: column;
 }
 
-.hero-img {
-  width: 200px;
-  height: 200px;
-  border-radius: 20px;
-  box-shadow: 0 15px 40px rgba(0,0,0,0.15);
-  transition: transform 0.6s, box-shadow 0.6s;
+/* 홈 페이지 전체 컨텐츠 래퍼 */
+.home-container {
+  width: 100%;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
 }
 
-.hero-img:hover {
-  transform: translateY(-10px) scale(1.05);
-  box-shadow: 0 25px 60px rgba(0,0,0,0.2);
-}
-
-.intro-title {
-  text-align: center;
-  font-size: 2.5rem;
-  margin: 60px 0 40px;
-  animation: fadeIn 1s 0.5s ease forwards;
-}
-
-.project-info {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 30px;
-}
-
+/* 프로젝트 정보 박스 / 팀 박스 / 기타 박스 */
 .info-box {
-  background: linear-gradient(135deg, #ffffff, #f0f4ff);
-  padding: 30px;
-  border-radius: 20px;
-  box-shadow: 0 15px 30px rgba(0,0,0,0.1);
-  transition: transform 0.4s, box-shadow 0.4s;
+  width: 90%;
+  max-width: 800px;
+  padding: 60px 40px;
+  border: 2px solid #333;
+  text-align: center;
+  box-sizing: border-box;
 }
 
-.info-box:hover {
-  transform: translateY(-10px);
-  box-shadow: 0 25px 50px rgba(0,0,0,0.15);
-}
-
+/* 박스 안 제목 */
 .info-box h3 {
-  margin-top: 0;
-  color: #222;
-  margin-bottom: 15px;
+  font-size: 32px;
+  font-weight: bold;
+  margin-bottom: 30px;
+  color: #333;
 }
 
+/* 박스 안 내용 텍스트 */
 .info-box p {
-  line-height: 1.6;
+  font-size: 20px;
+  line-height: 1.8;
+  color: #666;
+  margin: 0;
 }
 
-a {
-  color: #ffb400;
-  text-decoration: none;
+/* 히어로 타이틀 */
+.hero-title {
+  font-size: 48px;
+  font-weight: bold;
+  margin-bottom: 40px;
+  color: #333;
+  text-align: center;
 }
 
-a:hover {
-  text-decoration: underline;
+/* 강조 텍스트 */
+.highlight {
+  color: #FFD900;
 }
 
-/* 애니메이션 */
-@keyframes fadeIn {
-  0% { opacity: 0; transform: translateY(20px);}
-  100% { opacity: 1; transform: translateY(0);}
+/* 히어로 이미지 */
+.hero-img {
+  width: 400px;
+  max-width: 80%;
+  height: auto;
+}
+
+/* 페이지 인디케이터 */
+.page-indicator {
+  position: fixed;
+  right: 30px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 1000;
+}
+
+.page-indicator div {
+  width: 12px;
+  height: 12px;
+  border: 2px solid #333;
+  background-color: transparent;
+  transition: background-color 0.3s;
+}
+
+.page-indicator div.active {
+  background-color: #FFD900;
+}
+
+/* 테이블 스타일 */
+.info-box table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.info-box table td, 
+.info-box table th {
+  border: 1px solid #333;
+  padding: 8px;
+  text-align: center;
+}
+
+.info-box table tr:first-child td {
+  font-weight: bold;
 }
