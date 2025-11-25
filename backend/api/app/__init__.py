@@ -1,12 +1,10 @@
 from flask import Flask
-from flask_socketio import SocketIO
 from flask_cors import CORS
 
 # --- [2] 전역 객체 생성 ---
 # Flask 'app' 객체와 'socketio' 객체를 전역(global)으로 생성합니다.
 # (아직 socketio는 app과 연결되지 않은, 비어있는 상태)
 app = Flask(__name__)
-socketio = SocketIO() # <-- UNINITIALIZED
 
 # --- [3] create_app (앱 팩토리 함수) 정의 ---
 def create_app():
@@ -27,7 +25,6 @@ def create_app():
     # --- [3-3] 라우트(API 주소) 및 이벤트 임포트 ---
     # [중요] 순환 참조(Circular Import) 오류를 방지하기 위해
     # app 객체가 완전히 생성된 *이후*에 라우트 파일을 임포트합니다.
-    # from app import socket_events # 'events' -> 'socket_events'로 변경
 
     # Blueprint 임포트 및 등록
     from app.routers.data_routes import data_bp
