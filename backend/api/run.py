@@ -5,11 +5,14 @@ from app import create_app # app/__init__.py 에서 정의한 팩토리 함수�
 PORT = 5001
 app = create_app()
 
-# 2. 이 파일(run.py)이 터미널에서 'python run.py'로 직접 실행되었을 때만
+# 2. [중요] SocketIO 객체를 app과 연결(초기화)
+# 이 작업을 create_app() 밖(run.py)으로 분리하여,
+# Flask의 'debug=True' 리로더(reloader)가 일으키는 순환 참조 문제를 해결합니다.
+
+# 3. 이 파일(run.py)이 터미널에서 'python run.py'로 직접 실행되었을 때만
 #    아래 코드를 실행하라는 의미
 if __name__ == '__main__':
-
-    print(f"Starting Flask server on http://0.0.0.0:{PORT}")
-
-    # Flask 서버 실행
-    app.run(debug=True, host='0.0.0.0', port=PORT)
+    
+    print(f"Starting server on http://0.0.0.0:{PORT}")
+    app.run(app, debug=True, host='0.0.0.0', port=PORT, 
+                allow_unsafe_werkzeug=True) # Werkzeug 3.0+ 호환성 문제 해결
