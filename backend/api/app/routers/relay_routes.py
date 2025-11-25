@@ -48,13 +48,16 @@ def control_relay():
             buyer_id = get_buyer_id_from_channel(channel)
             # 채널별 소비전력 조회
             amount = get_channel_power(channel)
-            if buyer_id and amount:
+            if buyer_id in [1,2,3,4] and amount >= 0:
                 # DB에 거래 내역 저장
                 success, msg, _ = insert_trade_history(buyer_id, amount)
                 if not success:
                     print(f"거래 내역 저장 실패 ({channel}) : {msg}")
                 else:
                     print(f"거래 내역 저장 성공 ({channel}) : {amount}W")
+            else:
+                print("릴레이 제어 : 필수 데이터 입력값 오류")
+                return jsonify({"message": "필수 데이터 입력값 오류"}), 400
 
     # 아두이노에 릴레이 제어 전송
     success, message, status_code = send_to_arduino(data, arduino_url)
