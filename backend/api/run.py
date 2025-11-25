@@ -13,6 +13,8 @@ app = create_app()
 #    아래 코드를 실행하라는 의미
 if __name__ == '__main__':
     
-    print(f"Starting server on http://0.0.0.0:{PORT}")
-    app.run(app, debug=True, host='0.0.0.0', port=PORT, 
-                allow_unsafe_werkzeug=True) # Werkzeug 3.0+ 호환성 문제 해결
+    print(f"Starting Flask server on http://0.0.0.0:{PORT}")
+
+    # Flask 서버 실행
+    # app.run(debug=True, host='0.0.0.0', port=PORT, allow_unsafe_werkzeug=True)  # Werkzeug 3.0+ 호환성
+    app.run(debug=True, host='0.0.0.0', port=PORT)
