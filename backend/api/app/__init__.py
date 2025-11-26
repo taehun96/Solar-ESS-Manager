@@ -33,12 +33,12 @@ def create_app():
     from app.routers.data_routes import data_bp
     from app.routers.relay_routes import relay_bp
     from app.routers.channels_routes import channels_bp
-    from app.routers.energy_routes import energy_bp
+    # from app.routers.energy_routes import energy_bp
 
     app.register_blueprint(data_bp)
     app.register_blueprint(relay_bp)
     app.register_blueprint(channels_bp) 
-    app.register_blueprint(energy_bp) 
+    #app.register_blueprint(energy_bp) 
 
     # 생성 및 설정이 완료된 app 객체를 반환합니다.
     return app
