@@ -42,11 +42,11 @@ def create_app():
         scheduler = BackgroundScheduler()
         scheduler.add_job(
             func=aggregate_old_data,
-            trigger="interval",
-            seconds=30
-            # trigger="cron",
-            # hour="*",
-            # minute=0
+            # trigger="interval",
+            # seconds=30
+            trigger="cron",
+            hour="*",
+            minute=0
         )
         scheduler.start()
 

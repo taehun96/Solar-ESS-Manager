@@ -6,7 +6,7 @@ from app.services.relay_service import (
     get_current_relay_status,
     send_to_arduino
 )
-from app.services.common_service import get_buyer_id_from_channel, get_channel_power
+from app.services.common_service import get_buyer_id_from_channel, CHANNEL_CONFIG
 from dotenv import load_dotenv
 import os
 
@@ -47,7 +47,7 @@ def control_relay():
             # 채널명을 buyer_id로 변환
             buyer_id = get_buyer_id_from_channel(channel)
             # 채널별 소비전력 조회
-            amount = get_channel_power(channel)
+            amount = CHANNEL_CONFIG.get(channel)
             if buyer_id in [1,2,3,4] and amount >= 0:
                 # DB에 거래 내역 저장
                 success, msg, _ = insert_trade_history(buyer_id, amount)

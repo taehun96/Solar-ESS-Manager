@@ -4,6 +4,15 @@ from app.db import get_connection, close_connection
 from contextlib import contextmanager
 import traceback
 
+# Config channel_config 데이터 접근
+try:
+    CONFIG_PATH = Path(__file__).parent.parent / "config" / "config_arduino.json"
+    with open(CONFIG_PATH, "r") as f:
+        CHANNEL_CONFIG = json.load(f)["channel_config"]
+except Exception as e:
+    print(f"config 읽기 오류 - {e}")
+    CHANNEL_CONFIG = {}
+
 # 채널명을 buyer_id로 변환
 def get_buyer_id_from_channel(channel):
     """
@@ -16,22 +25,6 @@ def get_buyer_id_from_channel(channel):
         "D": 4
     }
     return channel_to_id.get(channel)
-
-# config.json에서 채널별 소비전력 조회
-def get_channel_power(channel):
-    """
-    config.json에서 채널별 소비전력 조회
-    """
-    try:
-        CONFIG_PATH = Path(__file__).parent.parent / "config" / "config_arduino.json"
-        with open(CONFIG_PATH, "r") as f:
-            config = json.load(f)
-
-        return config.get("channel_config", {}).get(channel)
-
-    except Exception as e:
-        print(f"채널 전력 조회 : config.json 읽기 오류 - {e}")
-        return None
 
 # 에러 처리 클래스 생성
 class DBException(Exception):

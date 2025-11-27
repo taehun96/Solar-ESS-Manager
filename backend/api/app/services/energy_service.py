@@ -1,19 +1,26 @@
 from app.services.common_service import db_transaction, handle_errors
 import traceback, pickle
-import pandas as pd
+import numpy as np
 from pathlib import Path
+from functools import lru_cache
 
 # 모델 불러오기
 MODEL_PATH = Path(__file__).parent.parent.parent.parent / "models" / "rf_best_model.pkl"
 
-# 모델 확인
-if MODEL_PATH.exists():
+# 모델 사용시에만 로드
+@lru_cache(maxsize=1)
+def _load_model():
+    """
+    모델 사용시에만 최초 1회만 로드 진행
+    @lru_cache으로 모델 로드 캐시 저장
+    """
+    if not MODEL_PATH.exists():
+        print("모델 파일 없음")
+        raise FileNotFoundError("모델 파일 없음")
+    
     with open(MODEL_PATH, "rb") as f:
-        model = pickle.load(f)
-    print("모델 로드 성공")
-else:
-    model = None
-    print("모델 파일 없음")
+        print("모델 로드 성공")
+        return pickle.load(f)
 
 # lux -> 일사량 변환
 def lux_to_insolation(lux):
@@ -87,10 +94,15 @@ def predict_solar_generation(data):
         data["insolation"] = lux_to_insolation(data["lux"])
         del data["lux"]
 
-        # DataFrame으로 변환
-        X = pd.DataFrame([data])
-
         # 모델 예측
+        model = _load_model()
+
+        X = np.array([[
+            data["year"], data["month"], data["day"], data["time"],
+            data["generation"], data["prev_generation"],
+            data["yesterday_generation"], data["insolation"]
+        ]])
+
         y = model.predict(X)
 
         # 결과 출력 딕셔너리 생성
