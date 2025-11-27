@@ -6,7 +6,7 @@ from app.services.relay_service import (
     get_current_relay_status,
     send_to_arduino
 )
-from app.services.common_service import get_buyer_id_from_channel, get_channel_power
+from app.services.common_service import get_buyer_id_from_channel, CHANNEL_CONFIG
 from dotenv import load_dotenv
 import os
 
@@ -47,21 +47,24 @@ def control_relay():
             # 채널명을 buyer_id로 변환
             buyer_id = get_buyer_id_from_channel(channel)
             # 채널별 소비전력 조회
-            amount = get_channel_power(channel)
-            if buyer_id and amount:
+            amount = CHANNEL_CONFIG.get(channel)
+            if buyer_id in [1,2,3,4] and amount >= 0:
                 # DB에 거래 내역 저장
                 success, msg, _ = insert_trade_history(buyer_id, amount)
                 if not success:
                     print(f"거래 내역 저장 실패 ({channel}) : {msg}")
                 else:
                     print(f"거래 내역 저장 성공 ({channel}) : {amount}W")
+            else:
+                print("릴레이 제어 : 필수 데이터 입력값 오류")
+                return jsonify({"message": "필수 데이터 입력값 오류"}), 400
 
     # 아두이노에 릴레이 제어 전송
     success, message, status_code = send_to_arduino(data, arduino_url)
-    if not success:
+    if message:
         return jsonify({"message": message}), status_code
-
-    return jsonify({"message": "success"}), 200
+    else:
+        return jsonify({"success": success}), 200
 
 # === [GET] /api/relay/status ===
 # 기능: 웹(프론트엔드)이 페이지에 처음 접속할 때,

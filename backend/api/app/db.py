@@ -1,7 +1,6 @@
 import mysql.connector
 from dotenv import load_dotenv
 import os
-# from mysql.connector import pooling # 커넥션 풀링을 사용하지 않으므로 삭제
 
 # .env 파일 로드
 load_dotenv()

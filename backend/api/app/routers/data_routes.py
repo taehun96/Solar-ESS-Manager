@@ -31,17 +31,23 @@ def receive_sun_data():
     solar_w = data.get("solar_w") # 페널 전력 생산량
     lux = data.get("lux") # 조도값
 
-    # (선택) 데이터 유효성 검사
+    # 데이터 유효성 검사
     if soc is None or solar_w is None or lux is None:
         print("아두이노 데이터 수신 : 필수 데이터 누락")
         return jsonify({"message": "필수 데이터가 누락되었습니다."}), 400
+    if not (0 <= soc <= 100) or solar_w < 0 or lux < 0:
+        print("아두이노 데이터 수신 : 필수 데이터 입력값 오류")
+        return jsonify({"message": "필수 데이터 입력값 오류"}), 400
     
     print(f"\nSOC: {soc}%, 전력: {solar_w}W, 조도: {lux}lux")
 
     _, message, status_code = save_sensor_data(soc, solar_w, lux)
 
     # 성공 응답 반환
-    return jsonify({"message": message}), status_code
+    if message:
+        return jsonify({"message": message}), status_code
+    else:
+        return jsonify({"success": True}), status_code
 
 # 거래 내역 조회
 @data_bp.route("/api/data/history", methods=["GET"])

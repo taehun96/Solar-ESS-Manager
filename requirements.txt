@@ -1,0 +1,26 @@
+# Flask: 웹 서버를 만드는 핵심 프레임워크
+Flask
+
+# mysql-connector-python: Python이 MySQL DB와 직접 통신할 때 사용
+mysql-connector-python
+
+# Flask-Cors: 프론트엔드(웹)와 백엔드 간의 CORS 문제 해결
+Flask-Cors
+
+# python-dotenv: .env 파일에서 환경변수(DB 비밀번호 등)를 읽어오기 위해 필요
+python-dotenv
+
+# gunicorn: (선택) 실제 서버에 배포할 때 사용
+gunicorn
+
+# APScheduler: 주기적인 작업(스케줄러) 실행
+APScheduler
+
+# requests: 외부 HTTP 요청 (아두이노 통신)
+requests
+
+# numpy: 데이터 처리 및 모델 예측
+numpy
+
+# scikit-learn: 머신러닝 모델 실행
+scikit-learn
