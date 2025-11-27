@@ -19,8 +19,8 @@ APScheduler
 # requests: 외부 HTTP 요청 (아두이노 통신)
 requests
 
-# pandas: 데이터 처리 및 모델 예측
-pandas
+# numpy: 데이터 처리 및 모델 예측
+numpy
 
 # scikit-learn: 머신러닝 모델 실행
 scikit-learn
