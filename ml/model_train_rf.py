@@ -58,7 +58,14 @@ print("Valid :", X_valid.shape)
 print("Test :", X_test.shape)
 
 # 모델 생성
-model = RandomForestRegressor(random_state=42) # 랜덤 요소 고정
+model = RandomForestRegressor(
+    n_estimators=n_estimators,
+    max_depth=max_depth,
+    min_samples_split=min_samples_split,
+    min_samples_leaf=min_samples_leaf,
+    verbose=2,
+    random_state=42
+)
 
 # 파라미터 그리드 정의
 # param_grid = {
@@ -68,7 +75,7 @@ model = RandomForestRegressor(random_state=42) # 랜덤 요소 고정
 #     "min_samples_leaf": min_samples_leaf
 # }
 
-# 그리드 서치 생성
+# # 그리드 서치 생성
 # grid_search = GridSearchCV(
 #     model,
 #     param_grid,
@@ -131,6 +138,6 @@ for i, label in enumerate(["1h", "2h", "3h"]):
     print(f"R2 : {r2:.4f}")
 
 # 모델 저장
-with open('../data/model/rf_best_model.pkl', 'wb') as f:
+with open("data/model/rf_best_model.pkl", "wb") as f:
     pickle.dump(model, f)
 print("\n[ 모델 저장 완료! ]")
