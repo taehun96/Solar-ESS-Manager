@@ -1,10 +1,10 @@
-from app.db import get_connection, close_connection
 import traceback
-import json, os
+import json
+from pathlib import Path
 from itertools import combinations
 
 # config.json 불러오기
-CONFIG_PATH = os.path.join(os.path.dirname(__file__), "config.json")
+CONFIG_PATH = Path(__file__).parent.parent / "config" / "config_arduino.json"
 with open(CONFIG_PATH) as f:
     config = json.load(f)
 
@@ -33,12 +33,11 @@ def _init_power(battery, power, channel_config=None, duration_minutes=None):
 
     # 총 가용 전력
     available_power = battery_w + power
-    print(f"배터리 잔량 : {battery} % \n실시간 생산량 : {power} W \n총 가용 전력({duration_minutes}분 기준) : {available_power} W\n")
+    print(f"\n배터리 잔량 : {battery} % \n실시간 생산량 : {power} W \n총 가용 전력({duration_minutes}분 기준) : {available_power:.2f} W")
 
     return available_power, channel_config, duration_minutes
 
 # 최적 판매 조합 추천 함수
-#TODO config 파일 업데이트 (현재는 테스트용 값 적용)
 def get_optimal_combination(battery, power, channel_config=None, duration_minutes=None):
     """
     매개변수
@@ -52,7 +51,7 @@ def get_optimal_combination(battery, power, channel_config=None, duration_minute
         available_power, channel_config, _ = _init_power(battery, power, channel_config, duration_minutes)
 
         # 모든 조합 생성
-        channels = ["A", "B", "C", "D"]
+        channels = [ch for ch in config["channel_config"]]
         all_combinations = []
 
         # 1개 ~ 4개 조합 생성
@@ -73,26 +72,26 @@ def get_optimal_combination(battery, power, channel_config=None, duration_minute
                     "channels": combi,
                     "power": total_power
                 })
-        print(f"유효 조합 수 : {len(valid_combinations)} 개\n")
+        print(f"\n유효 조합 수 : {len(valid_combinations)} 개")
 
         # 최적 조합 선택 (가장 많은 채널 활성화 -> 더 큰 전력 소비 기준)
         if not valid_combinations:
-            print("최적 조합 추천 : 판매 가능한 채널이 없습니다.")
+            print("\n최적 조합 추천 : 판매 가능한 채널이 없습니다.")
             return [], None, 200
 
         best = max(valid_combinations, key=lambda x: (len(x["channels"]), x["power"]))
-        print(f"최적 판매 조합 : {best['channels']}")
+        print(f"\n최적 판매 조합 : {best['channels']}")
 
         return best["channels"], None, 200
 
     except ValueError as e:
-        print(f"최적 조합 추천 : 입력값 오류 - {e}")
+        print(f"\n최적 조합 추천 : 입력값 오류 - {e}")
         return None, str(e), 400
 
     except Exception as e:
-        print(f"최적 조합 추천 : 오류 - {e}")
+        print(f"\n최적 조합 추천 : 오류 - {e}")
         traceback.print_exc()
-        return None, "최적 조합 추천 : 서버 오류 발생", 500
+        return None, "Channels : Internal server error", 500
 
 # 실시간 선택 가능 채널 확인 및 배터리 보호 함수
 def get_available_channels(battery, power, selected_channels=[], channel_config=None, duration_minutes=None, battery_protection_threshold=None):
@@ -114,9 +113,9 @@ def get_available_channels(battery, power, selected_channels=[], channel_config=
             battery_protection_threshold = config["battery_protection_threshold"]
 
         if battery < battery_protection_threshold:
-            print(f"배터리 잔량이 {battery_protection_threshold} % 미만이므로 판매가 불가합니다.")
+            print(f"\n배터리 잔량이 {battery_protection_threshold} % 미만이므로 판매가 불가합니다.")
             return {
-                "A": True,
+                "A": False,
                 "B": False,
                 "C": False,
                 "D": False
@@ -125,11 +124,11 @@ def get_available_channels(battery, power, selected_channels=[], channel_config=
         # 이미 선택된 채널 전력 계산
         selected_power = sum(channel_config[ch] for ch in selected_channels)
         if selected_channels:
-            print(f"현재 판매중인 채널 : {selected_channels}\n소비중인 전력 : {selected_power} W\n")
+            print(f"\n현재 판매중인 채널 : {selected_channels}\n소비중인 전력 : {selected_power:.2f} W")
 
         # 남은 전력
         remaining_power = available_power - selected_power
-        print(f"현재 가용 전력({duration_minutes}분 기준) : {remaining_power} W\n")
+        print(f"\n현재 가용 전력({duration_minutes}분 기준) : {remaining_power:.2f} W")
 
         # 결과 딕셔너리 반환
         result = {}
@@ -139,15 +138,15 @@ def get_available_channels(battery, power, selected_channels=[], channel_config=
                 result[key] = False
             else:
                 result[key] = value <= remaining_power
-        print(f"판매 가능 채널 : {[ch for ch, val in result.items() if val]}")
+        print(f"\n판매 가능 채널 : {[ch for ch, val in result.items() if val]}")
 
         return result, None, 200
 
     except ValueError as e:
-        print(f"판매 가능 채널 조회 : 입력값 오류 - {e}")
-        return None, str(e), 400
+        print(f"\n판매 가능 채널 조회 : 입력값 오류 - {e}")
+        return None, "Channels : Invalid input values", 400
 
     except Exception as e:
-        print(f"판매 가능 채널 조회 : 오류 - {e}")
+        print(f"\n판매 가능 채널 조회 : 오류 - {e}")
         traceback.print_exc()
-        return None, "판매 가능 채널 조회 : 서버 오류 발생", 500
+        return None, "Channels : Internal server error", 500

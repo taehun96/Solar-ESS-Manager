@@ -1,24 +1,23 @@
 import mysql.connector
 from dotenv import load_dotenv
 import os
-# from mysql.connector import pooling # 커넥션 풀링을 사용하지 않으므로 삭제
 
 # .env 파일 로드
 load_dotenv()
 
 # env 변수 가져오기
-host = os.getenv("DB_HOST")
-user = os.getenv("DB_USER")
-password = os.getenv("DB_PASSWORD")
-database = os.getenv("DB_DATABASE")
+DB_HOST = os.getenv("DB_HOST")
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_DATABASE = os.getenv("DB_DATABASE")
 
 def get_connection():
     try:
         conn = mysql.connector.connect(
-            host= host,
-            user = user,
-            password = password,
-            database = database
+            host= DB_HOST,
+            user = DB_USER,
+            password = DB_PASSWORD,
+            database = DB_DATABASE
         )
         cursor = conn.cursor(dictionary=True) 
         
@@ -37,5 +36,5 @@ def close_connection(conn, cursor):
             # DB 연결을 완전히 끊는 동작을 합니다.
             conn.close() 
     except Exception as e:
-        print(f"DB 연결 닫기 실패: {e}")
+        print(f"DB 종료 실패: {e}")
 

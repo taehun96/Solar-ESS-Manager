@@ -166,13 +166,23 @@ function Home() {
         <div className="content-container">
           <div className="info-box">
             <h3>팀원소개 / 연락처</h3>
-            <p>
-              팀장/프론트: 오왕경 (hong@example.com)<br />
-              머신러닝: 안태현 (kim@example.com)<br />
-              백엔드: 이민정 (lee@example.com)<br />
-              아두이노: 윤태훈 (lee@example.com)<br />
-              아두이노: 최하연 (lee@example.com)
-            </p>
+            <div style={{display:'flex', flexWrap:'wrap',justifyContent:'center', gap:'40px'}}>
+              <div>
+                팀장/프론트: 오왕경 <br />(qowkqowk@gmail.com)
+              </div>
+              <div>
+                머신러닝: 안태현 <br /> (withblua@gmail.com)
+              </div>
+              <div>
+                 백엔드: 이민정 <br />(naas0523@gmail.com)
+              </div>
+              <div>
+                아두이노: 윤태훈 <br />(yun47873160@gmail.com)
+              </div>
+              <div>
+                아두이노: 최하연 <br />(gkdus011020@gmail.com)
+              </div>
+            </div>
           </div>
         </div>
       )
