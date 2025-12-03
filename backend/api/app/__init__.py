@@ -15,7 +15,8 @@ def create_app():
     run.py 파일이 이 함수를 호출하여 서버를 실행시킵니다.
     """
     # --- 앱 설정 (Config) ---
-    app.config['CORS_ORIGINS'] = "*" # 개발용: 모든 도메인 허용
+    app.config["CORS_ORIGINS"] = "*" # 개발용: 모든 도메인 허용
+    # app.config["CORS_ORIGINS"] = os.getenv("FRONTEND_URL") # 배포용
     
     # --- 확장(라이브러리) 초기화 ---
     # CORS 설정을 앱에 적용합니다.
