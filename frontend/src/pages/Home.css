@@ -1,0 +1,114 @@
+/* 전체 폰트/컬러 */
+body {
+  font-family: 'Poppins', sans-serif;
+  color: #333;
+  margin: 0;
+  padding: 0;
+}
+
+/* 공통 컨테이너 */
+.content-container {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+/* 홈 페이지 전체 컨텐츠 래퍼 */
+.home-container {
+  width: 100%;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 프로젝트 정보 박스 / 팀 박스 / 기타 박스 */
+.info-box {
+  width: 90%;
+  max-width: 800px;
+  padding: 60px 40px;
+  border: 2px solid #333;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+/* 박스 안 제목 */
+.info-box h3 {
+  font-size: 32px;
+  font-weight: bold;
+  margin-bottom: 30px;
+  color: #333;
+}
+
+/* 박스 안 내용 텍스트 */
+.info-box p {
+  font-size: 20px;
+  line-height: 1.8;
+  color: #666;
+  margin: 0;
+}
+
+/* 히어로 타이틀 */
+.hero-title {
+  font-size: 48px;
+  font-weight: bold;
+  margin-bottom: 40px;
+  color: #333;
+  text-align: center;
+}
+
+/* 강조 텍스트 */
+.highlight {
+  color: #FFD900;
+}
+
+/* 히어로 이미지 */
+.hero-img {
+  width: 400px;
+  max-width: 80%;
+  height: auto;
+}
+
+/* 페이지 인디케이터 */
+.page-indicator {
+  position: fixed;
+  right: 30px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 1000;
+}
+
+.page-indicator div {
+  width: 12px;
+  height: 12px;
+  border: 2px solid #333;
+  background-color: transparent;
+  transition: background-color 0.3s;
+}
+
+.page-indicator div.active {
+  background-color: #FFD900;
+}
+
+/* 테이블 스타일 */
+.info-box table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.info-box table td, 
+.info-box table th {
+  border: 1px solid #333;
+  padding: 8px;
+  text-align: center;
+}
+
+.info-box table tr:first-child td {
+  font-weight: bold;
+}

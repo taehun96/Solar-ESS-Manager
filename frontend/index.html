@@ -5,14 +5,61 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Solar ESS Manager</title>
     <style>
+      p{
+        margin: 2px;
+      }
+      h1{
+        margin-top: 40px;
+        margin: 0;
+        margin-bottom: 40px;
+      }
       body{
         margin: 0;
         padding: 0;
+        overscroll-behavior: none;
       }
+      html{
+        overscroll-behavior: none;
+      }
+      button{
+        background-color:#DCDCDC;
+        border: 0;
+        padding: 10px;
+      }
+      button:hover{
+        background-color: #FFD900;
+      }
+      button:active{
+        background-color: #d3b50c;
+      }
+
+      #holder{
+        display: flex;
+        justify-content: center;
+        width: 200px;
+        height: 200px;
+        margin-left: 10px;
+      }
+
+      .ardu-button:active{
+        background-color: #FFD900;
+      }
+
+      .normal{
+        font-size: 21px;
+      }
+      .important-normal{
+        font-size: 25px;
+        font-weight: bold;
+      }
+
+
+
     </style>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    </footer>
   </body>
 </html>
