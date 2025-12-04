@@ -8,6 +8,7 @@ if __name__=="__main__":
     if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
         reset_relay()
 
+    PORT = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0",
-            port=5000,
-            debug=True)
+            port=PORT,
+            debug=False)
