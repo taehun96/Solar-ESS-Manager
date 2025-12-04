@@ -1,0 +1,319 @@
+================================================================
+  메인 브랜치 덮어씌우기 전후 변경점 정리
+================================================================
+작성일: 2025-12-02
+작업자: OWK
+
+================================================================
+1. 작업 개요
+================================================================
+
+작업 내용:
+- frontend 폴더 내부는 유지 (OWK의 작업 영역)
+- frontend 폴더 외부는 origin/main 최신 커밋으로 덮어씌움
+- 로컬 브랜치 (owk): 마지막 커밋 11/24
+- 원격 메인 (origin/main): 최신 커밋 11/30 (ATH)
+
+덮어씌운 대상:
+- backend/ (전체)
+- ml/ (전체)
+- requirements.txt
+- .gitignore
+
+유지된 파일:
+- frontend/src/pages/EnvSetting.jsx (OWK 작업)
+- frontend/src/pages/Home.jsx (OWK 작업)
+- frontend/src/pages/Trade.jsx (OWK 작업)
+- frontend/img/dfdfd.af (OWK 작업)
+
+================================================================
+2. 주요 변경사항 통계
+================================================================
+
+총 변경 파일: 20개
+총 변경 라인: +452줄, -362줄
+
+주요 커밋 히스토리 (11/24 이후):
+- 7216b7a 2025-11-30 ATH: update backend
+- a57cf76 2025-11-30 ATH: update backend
+- ad4da70 2025-11-28 ATH: update backend
+- a69f08a 2025-11-28 ATH: update ml
+- 6786532 2025-11-27 ATH: update gitignore
+- ed5cb11 2025-11-27 ATH: update requirements.txt
+- 5b11f9e 2025-11-27 ATH: update backend
+- 5b9ee23 2025-11-26 ATH: update backend
+- d9d0bcb 20251126 LMJ
+- 10eafec 202251126LMJ
+- c8c314d 2025-11-24 ATH: update backend
+
+================================================================
+3. 핵심 변경사항 상세
+================================================================
+
+[A] app/__init__.py - SocketIO 제거 및 스케줄러 추가
+--------------------------------------------------
+❌ 제거됨:
+- Flask-SocketIO import
+- socketio 전역 객체
+- app.config['ASYNC_MODE'] 설정
+- socketio.init_app() 초기화 로직
+
+✅ 추가됨:
+- APScheduler 스케줄러 추가
+- aggregate_old_data() 정시 실행 (매시간 0분)
+- WERKZEUG_RUN_MAIN 환경변수 체크로 중복 실행 방지
+
+변경 이유:
+- SocketIO 실시간 통신 제거 (프론트엔드와 불일치 발생!)
+- 시간별 데이터 집계를 위한 스케줄러 도입
+
+
+[B] run.py - 단순 Flask 서버로 회귀
+--------------------------------------------------
+❌ 제거됨:
+- from app import create_app, socketio
+- socketio.init_app() 초기화
+- socketio.run() 실행
+- 포트 5001 사용
+- allow_unsafe_werkzeug 플래그
+
+✅ 추가됨:
+- 단순 Flask app 직접 생성
+- CORS 직접 적용
+- reset_relay() 서버 시작 시 실행
+- 포트 5000 사용
+- use_reloader=False, threaded=False 설정
+
+변경 이유:
+- SocketIO 제거로 인한 단순화
+- Factory Pattern 사용 중단
+- 직접적인 Flask 서버 실행 방식으로 회귀
+
+⚠️ 문제점:
+- app/__init__.py의 create_app()과 run.py의 Flask() 중복 생성
+- Blueprint 등록이 app/__init__.py에만 존재
+- run.py는 create_app()을 호출하지 않음 (구조적 충돌!)
+
+
+[C] requirements.txt - 의존성 변경
+--------------------------------------------------
+✅ 추가됨:
+- APScheduler (스케줄러)
+- requests (아두이노 HTTP 통신)
+- numpy (데이터 처리)
+- scikit-learn (ML 모델)
+
+❌ 제거됨:
+- Flask-SocketIO (실시간 통신 제거)
+- python-socketio
+- python-engineio
+
+변경 이유:
+- SocketIO 실시간 통신 제거
+- ML 모델 예측 기능 추가
+- APScheduler로 정시 작업 실행
+
+
+[D] energy_routes.py - 서비스 레이어 분리
+--------------------------------------------------
+변경 내용:
+- 87줄 감소 (복잡한 로직을 services/energy_service.py로 이동)
+- 라우트는 단순히 서비스 함수 호출만 담당
+- 에러 핸들링 개선
+
+✅ 장점:
+- 코드 가독성 향상
+- 관심사 분리 (Separation of Concerns)
+- 테스트 용이성 증가
+
+
+[E] energy_service.py - 새로 생성됨
+--------------------------------------------------
+새로 추가된 파일: backend/api/app/services/energy_service.py
+
+주요 기능:
+- @lru_cache로 ML 모델 로딩 최적화
+- lux → insolation 변환: lux * 0.0079 * 0.0036
+- 모델 경로: backend/models/rf_production_model.pkl
+- get_optimal_energy() 함수
+- get_predicted_energy() 함수
+
+변경 이유:
+- energy_routes.py에서 비즈니스 로직 분리
+- 모델 재사용성 향상
+
+
+[F] relay_service.py - 대폭 리팩토링
+--------------------------------------------------
+변경 내용:
+- 161줄 변경 (로직 단순화 및 재구성)
+- 릴레이 제어 로직 개선
+- 에러 핸들링 강화
+
+주요 개선사항:
+- reset_relay() 함수 추가
+- 릴레이 상태 관리 개선
+- 아두이노 통신 안정성 향상
+
+
+[G] sensor_service.py - 스케줄러 연동
+--------------------------------------------------
+변경 내용:
+- 94줄 변경
+- aggregate_old_data() 함수 추가
+- 시간별 데이터 집계 로직
+
+주요 기능:
+- sun_data_realtime → sun_data_hourly 집계
+- 매시간 0분에 자동 실행 (APScheduler 연동)
+
+
+[H] channels_service.py - 설정 파일 이동
+--------------------------------------------------
+변경 내용:
+- config.json 경로 변경
+- backend/api/app/services/config.json → backend/api/app/config/config_arduino.json
+- 배터리 보호 로직 개선 (SOC < 10% 판매 차단)
+
+
+[I] ML 모델 파일 변경
+--------------------------------------------------
+❌ 삭제됨:
+- backend/models/rf_best_model.pkl (55.7MB)
+- backend/models/config.json
+
+✅ 추가됨:
+- backend/models/rf_production_model.pkl (11.1MB)
+
+변경 이유:
+- 모델 크기 79% 감소 (최적화)
+- production 전용 모델로 전환
+
+
+[J] .gitignore 업데이트
+--------------------------------------------------
+추가된 무시 패턴:
+- *.pyc, __pycache__/
+- .env
+- node_modules/
+- *.pkl (임시 모델 파일)
+
+================================================================
+4. 프론트엔드와의 불일치 문제
+================================================================
+
+⚠️ CRITICAL ISSUE: Socket.IO 미스매치
+
+프론트엔드 상태:
+- socket.io-client 4.8.1 설치됨
+- Trade.jsx, EnvSetting.jsx에서 Socket.IO 사용
+- 기대 이벤트: 'new_sun_data', 'relay_status_update'
+
+백엔드 상태:
+- Flask-SocketIO 제거됨
+- 실시간 통신 불가능
+- 폴링(Polling) 방식으로 전환 필요
+
+해결 방안:
+1. 백엔드에 Flask-SocketIO 재추가
+2. 프론트엔드를 폴링 방식으로 변경
+3. 가상/실제 모드 토글로 Socket.IO 연결 제어
+
+================================================================
+5. 구조적 충돌 문제
+================================================================
+
+⚠️ app/__init__.py vs run.py 충돌
+
+문제점:
+- app/__init__.py: create_app() 팩토리 패턴 정의
+- run.py: Flask() 직접 생성 및 실행
+- run.py가 create_app()을 호출하지 않음
+- Blueprint 등록이 실행되지 않음
+
+현재 run.py 동작:
+1. Flask() 직접 생성
+2. CORS() 직접 적용
+3. /data 엔드포인트만 등록
+4. app.run() 실행
+
+실제로 사용되는 엔드포인트:
+- /data (run.py에서 정의)
+
+사용 불가능한 엔드포인트:
+- /api/data/* (data_routes.py)
+- /api/relay/* (relay_routes.py)
+- /api/channels/* (channels_routes.py)
+- /api/energy/* (energy_routes.py)
+
+해결 필요:
+run.py를 다음과 같이 수정해야 함:
+
+```python
+from app import create_app
+from app.services.relay_service import reset_relay
+
+app = create_app()
+
+if __name__ == "__main__":
+    reset_relay()
+    app.run(host="0.0.0.0", port=5000, debug=True)
+```
+
+================================================================
+6. 추천 다음 작업
+================================================================
+
+1순위: 구조적 충돌 해결
+- run.py가 create_app() 호출하도록 수정
+- Blueprint 라우트 정상 작동 확인
+
+2순위: Socket.IO 재추가 (팀 협의 필요)
+- LMG (백엔드) 및 ATH (ML/백엔드)와 협의
+- Flask-SocketIO 재설치 여부 결정
+- 실시간 통신 vs 폴링 방식 결정
+
+3순위: 프론트엔드 연동 테스트
+- 백엔드 서버 정상 작동 확인
+- API 엔드포인트 응답 테스트
+- 프론트엔드 연결 확인
+
+================================================================
+7. 팀원별 작업 내용 (11/24 ~ 11/30)
+================================================================
+
+ATH (태현):
+- 백엔드 주요 리팩토링 (11/24 ~ 11/30)
+- SocketIO 제거 결정
+- ML 모델 최적화 (55.7MB → 11.1MB)
+- APScheduler 도입
+- 서비스 레이어 분리
+
+LMJ (민정):
+- 백엔드 일부 업데이트 (11/26)
+- 세부 내용 확인 필요
+
+OWK (본인):
+- 프론트엔드 작업 (11/24)
+- EnvSetting.jsx, Home.jsx, Trade.jsx 수정
+- Socket.IO 클라이언트 구현
+
+================================================================
+8. 결론
+================================================================
+
+메인 브랜치 덮어씌우기 완료:
+✅ frontend 폴더는 본인 작업 유지
+✅ backend, ml, requirements.txt는 최신 상태로 업데이트
+
+발견된 문제:
+⚠️ run.py와 app/__init__.py 구조적 충돌
+⚠️ 프론트엔드 Socket.IO vs 백엔드 미구현 불일치
+⚠️ Blueprint 라우트 미등록 상태
+
+권장 사항:
+1. run.py 즉시 수정 필요 (create_app() 호출)
+2. 팀원과 Socket.IO 재도입 여부 협의
+3. 백엔드 서버 정상 작동 테스트 후 프론트엔드 연동
+
+================================================================

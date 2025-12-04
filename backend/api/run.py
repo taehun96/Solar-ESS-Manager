@@ -7,7 +7,7 @@ if __name__ == "__main__":
     reset_relay()
     app.run(
         host="0.0.0.0",
-        port=5000,
+        port=5001,
         debug=True,
         use_reloader=False,
         threaded=False

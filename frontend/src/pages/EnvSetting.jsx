@@ -120,15 +120,12 @@ function EnvSetting() {
   };
 
   const controlRelay = async (relay, state) => {
+    // 변경됨: relayAPI.control 호출 제거, 로컬 상태만 업데이트
     const newRelays = { ...currentData.relays, [relay]: state };
-    if (connectionMode === 'real') {
-      try {
-        await relayAPI.control([relay], state ? 'ON' : 'OFF');
-      } catch (error) {
-        console.error('Failed to control relay:', error);
-        setConnectionMode('virtual');
-      }
-    }
+    
+    // 기존 백엔드 호출 로직 제거됨
+    // if (connectionMode === 'real') { ... } 
+
     const updatedData = { ...currentData, relays: newRelays, timestamp: new Date().toISOString() };
     setCurrentData(updatedData);
     localStorage.setItem('solarData', JSON.stringify(updatedData));

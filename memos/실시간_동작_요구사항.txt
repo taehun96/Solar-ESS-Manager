@@ -1,0 +1,539 @@
+==============================================
+백엔드-프론트엔드 실시간 동작 요구사항
+날짜: 2025-12-01
+==============================================
+
+## 🚨 현재 상태 분석
+
+### 문제점:
+프론트엔드는 Socket.IO를 기대하지만, 백엔드에는 Socket.IO가 없습니다!
+
+**프론트엔드 (Socket.IO 사용 중):**
+- Trade.jsx: socket.io-client 사용
+- EnvSetting.jsx: socket.io-client 사용
+- 기대하는 이벤트:
+  1. 'new_sun_data' - 센서 데이터 업데이트
+  2. 'relay_status_update' - 릴레이 상태 변경
+
+**백엔드 (Socket.IO 없음):**
+- app/__init__.py에 Flask-SocketIO가 없음
+- requirements.txt에 Flask-SocketIO가 없음
+- 순수 REST API만 제공
+
+### 결과:
+❌ 실시간 양방향 통신 불가능
+❌ 프론트엔드가 Socket.IO 연결 시도하지만 백엔드가 응답 못함
+⚠️ 현재는 가상 모드(localStorage)로만 작동 가능
+
+==============================================
+## 해결 방안 1: 백엔드에 Socket.IO 추가 (권장)
+==============================================
+
+### 1. 백엔드 의존성 추가
+
+**requirements.txt에 추가:**
+```
+Flask-SocketIO
+python-socketio
+python-engineio
+```
+
+### 2. 백엔드 코드 수정
+
+**파일: backend/api/app/__init__.py**
+```python
+from flask import Flask
+from flask_cors import CORS
+from flask_socketio import SocketIO  # 추가
+from apscheduler.schedulers.background import BackgroundScheduler
+from app.services.sensor_service import aggregate_old_data
+import os
+
+app = Flask(__name__)
+socketio = SocketIO()  # 추가
+
+def create_app():
+    app.config['CORS_ORIGINS'] = "*"
+
+    # CORS 설정
+    CORS(app, resources={r"/api/*": {"origins": app.config['CORS_ORIGINS']}})
+
+    # SocketIO 초기화 (CORS 포함)
+    socketio.init_app(app, cors_allowed_origins="*")  # 추가
+
+    # Blueprint 등록
+    from app.routers.data_routes import data_bp
+    from app.routers.relay_routes import relay_bp
+    from app.routers.channels_routes import channels_bp
+    from app.routers.energy_routes import energy_bp
+
+    app.register_blueprint(data_bp)
+    app.register_blueprint(relay_bp)
+    app.register_blueprint(channels_bp)
+    app.register_blueprint(energy_bp)
+
+    # 스케줄러 설정
+    if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
+        scheduler = BackgroundScheduler()
+        scheduler.add_job(
+            func=aggregate_old_data,
+            trigger="cron",
+            hour="*",
+            minute=0
+        )
+        scheduler.start()
+
+    return app
+```
+
+### 3. 실행 파일 수정
+
+**파일: backend/api/run.py**
+```python
+from app import create_app, socketio  # socketio 추가
+
+app = create_app()
+
+if __name__ == "__main__":
+    # Flask 기본 실행 대신 socketio.run 사용
+    socketio.run(app, host="0.0.0.0", port=5000, debug=True)
+```
+
+### 4. Socket 이벤트 핸들러 추가
+
+**새 파일: backend/api/app/socket_events.py**
+```python
+from app import socketio
+from flask_socketio import emit
+
+@socketio.on('connect')
+def handle_connect():
+    print('클라이언트 연결됨')
+    emit('connection_response', {'status': 'connected'})
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    print('클라이언트 연결 해제됨')
+
+# 센서 데이터 브로드캐스트 함수
+def broadcast_sensor_data(data):
+    """
+    새로운 센서 데이터를 모든 연결된 클라이언트에 전송
+    data = {soc: int, solar_w: int, lux: int, timestamp: str}
+    """
+    socketio.emit('new_sun_data', data)
+
+# 릴레이 상태 브로드캐스트 함수
+def broadcast_relay_status(relay_data):
+    """
+    릴레이 상태 변경을 모든 연결된 클라이언트에 전송
+    relay_data = {A: bool, B: bool, C: bool, D: bool}
+    """
+    socketio.emit('relay_status_update', relay_data)
+```
+
+**파일: backend/api/app/__init__.py에 추가**
+```python
+def create_app():
+    # ... 기존 코드 ...
+
+    # Socket 이벤트 핸들러 등록
+    from app import socket_events  # 추가
+
+    return app
+```
+
+### 5. 서비스에서 Socket.IO 이벤트 발생
+
+**파일: backend/api/app/services/sensor_service.py**
+```python
+from app.socket_events import broadcast_sensor_data
+
+def save_sensor_data(soc, solar_w, lux):
+    # ... 기존 DB 저장 코드 ...
+
+    # 저장 성공 후 실시간 브로드캐스트
+    if 성공:
+        broadcast_sensor_data({
+            'soc': soc,
+            'solar_w': solar_w,
+            'lux': lux,
+            'timestamp': datetime.now().isoformat()
+        })
+
+    return success, message, status_code
+```
+
+**파일: backend/api/app/services/relay_service.py**
+```python
+from app.socket_events import broadcast_relay_status
+
+def update_relay_status_in_db(data):
+    # ... 기존 DB 저장 코드 ...
+
+    # 저장 성공 후 실시간 브로드캐스트
+    if 성공:
+        broadcast_relay_status(data)
+
+    return success, message, status_code
+```
+
+==============================================
+## 해결 방안 2: 프론트엔드를 Polling 방식으로 변경 (차선책)
+==============================================
+
+Socket.IO를 사용하지 않고 주기적으로 REST API를 호출하는 방식
+
+### 장점:
+- 백엔드 수정 불필요
+- 구현 간단
+
+### 단점:
+- 실시간성 떨어짐
+- 서버 부하 증가 (매초마다 요청)
+- 데이터 낭비
+
+### 구현 예시:
+
+**Trade.jsx 수정:**
+```javascript
+useEffect(() => {
+  // Socket.IO 대신 주기적 polling
+  const interval = setInterval(async () => {
+    try {
+      // 센서 데이터 가져오기
+      const response = await fetch(`${BACKEND_URL}/api/data/latest`);
+      const data = await response.json();
+
+      if (data.soc !== undefined) {
+        const energyInWatt = (data.soc / 100) * 10000;
+        setEnergyBalance(energyInWatt);
+      }
+
+      // 릴레이 상태 가져오기
+      const relayResponse = await fetch(`${BACKEND_URL}/api/relay/status`);
+      const relayData = await relayResponse.json();
+      setRelayStatus(relayData);
+
+    } catch (error) {
+      console.error('데이터 가져오기 실패:', error);
+    }
+  }, 2000); // 2초마다 갱신
+
+  return () => clearInterval(interval);
+}, []);
+```
+
+⚠️ **이 방식은 권장하지 않습니다** - 실시간성이 떨어지고 비효율적입니다.
+
+==============================================
+## 필수 요구사항 체크리스트
+==============================================
+
+### 백엔드 요구사항:
+
+✅ **1. Flask-SocketIO 설치**
+```bash
+cd backend/api
+pip install flask-socketio python-socketio python-engineio
+```
+
+✅ **2. requirements.txt 업데이트**
+```
+Flask-SocketIO
+python-socketio
+python-engineio
+```
+
+✅ **3. app/__init__.py 수정**
+- SocketIO 객체 생성
+- socketio.init_app() 호출
+- socket_events.py import
+
+✅ **4. run.py 수정**
+- socketio.run() 사용
+
+✅ **5. socket_events.py 생성**
+- connect/disconnect 핸들러
+- broadcast_sensor_data() 함수
+- broadcast_relay_status() 함수
+
+✅ **6. 서비스 레이어 수정**
+- sensor_service.py에서 broadcast_sensor_data() 호출
+- relay_service.py에서 broadcast_relay_status() 호출
+
+✅ **7. 포트 확인**
+- 백엔드: 5000번 포트 (현재 그대로)
+- Socket.IO는 같은 포트 사용
+
+### 프론트엔드 요구사항:
+
+✅ **1. 의존성 확인 (이미 설치됨)**
+```json
+{
+  "dependencies": {
+    "socket.io-client": "^4.8.1"
+  }
+}
+```
+
+✅ **2. 백엔드 URL 확인**
+```javascript
+const BACKEND_URL = 'http://localhost:5000';
+```
+
+✅ **3. Socket.IO 연결 코드 (이미 있음)**
+- Trade.jsx: 이미 구현됨
+- EnvSetting.jsx: 이미 구현됨
+
+✅ **4. 이벤트 리스너 (이미 있음)**
+- 'new_sun_data' 리스너
+- 'relay_status_update' 리스너
+
+### 환경 요구사항:
+
+✅ **1. MySQL 데이터베이스**
+- sun_data_realtime 테이블
+- relay_status 테이블
+- trade_history 테이블
+
+✅ **2. .env 파일 설정**
+```
+DB_HOST=localhost
+DB_USER=your_user
+DB_PASSWORD=your_password
+DB_DATABASE=solar_ess
+ARDUINO_URL=http://아두이노_IP:포트
+```
+
+✅ **3. Python 버전**
+- Python 3.8 이상 권장
+
+✅ **4. Node.js 버전**
+- Node.js 18 이상 권장
+
+==============================================
+## 실시간 동작 테스트 절차
+==============================================
+
+### 1단계: 백엔드 시작
+```bash
+cd backend/api
+python run.py
+```
+
+**확인사항:**
+- "Socket.IO is running" 메시지 확인
+- 포트 5000 리스닝 확인
+
+### 2단계: 프론트엔드 시작
+```bash
+cd frontend
+npm run dev
+```
+
+**확인사항:**
+- Vite 서버 시작 확인
+- http://localhost:5173 접속 가능
+
+### 3단계: 연결 테스트
+
+**브라우저 콘솔에서 확인:**
+```
+클라이언트 연결됨  // 백엔드 콘솔
+```
+
+**프론트엔드에서 확인:**
+- EnvSetting 페이지 접속
+- 연결 상태: "🟢 실제 모드 (백엔드 연결됨)"
+- "아두이노 연결 확인" 버튼 클릭
+
+### 4단계: 실시간 업데이트 테스트
+
+**방법 1: 아두이노 데이터 전송**
+```bash
+curl -X POST http://localhost:5000/api/data/solar \
+  -H "Content-Type: application/json" \
+  -d '{"soc": 85, "solar_w": 120, "lux": 35000}'
+```
+
+**확인사항:**
+- Trade 페이지 에너지 잔액 즉시 업데이트
+- EnvSetting 페이지 배터리 % 즉시 업데이트
+
+**방법 2: 릴레이 제어**
+```bash
+curl -X POST http://localhost:5000/api/relay/update \
+  -H "Content-Type: application/json" \
+  -d '{"A": true, "B": false, "C": false, "D": false}'
+```
+
+**확인사항:**
+- Trade 페이지 A가구 아이콘 즉시 변경 (turnon 이미지)
+- 다른 브라우저 탭에서도 동시 업데이트
+
+==============================================
+## 예상 데이터 흐름
+==============================================
+
+### 센서 데이터 업데이트 흐름:
+
+1. 아두이노 → POST /api/data/solar
+2. sensor_service.save_sensor_data()
+3. DB에 저장 (sun_data_realtime)
+4. broadcast_sensor_data() 호출
+5. Socket.IO → 'new_sun_data' 이벤트 발생
+6. 프론트엔드 모든 클라이언트 수신
+7. Trade.jsx: energyBalance 업데이트
+8. EnvSetting.jsx: currentData 업데이트
+9. 화면 즉시 갱신
+
+### 릴레이 제어 흐름:
+
+1. 프론트엔드 → POST /api/relay/update
+2. relay_service.update_relay_status_in_db()
+3. DB에 저장 (relay_status)
+4. broadcast_relay_status() 호출
+5. Socket.IO → 'relay_status_update' 이벤트 발생
+6. 프론트엔드 모든 클라이언트 수신
+7. Trade.jsx: relayStatus 업데이트
+8. 아이콘 즉시 변경
+
+### 다중 사용자 시나리오:
+
+사용자A가 릴레이 변경
+  ↓
+서버 DB 업데이트
+  ↓
+Socket.IO 브로드캐스트
+  ↓
+사용자A, B, C 모두 즉시 갱신
+
+==============================================
+## 주의사항 및 팁
+==============================================
+
+### 1. CORS 설정 확인
+백엔드와 프론트엔드가 다른 포트에서 실행되므로 CORS 필수:
+```python
+socketio.init_app(app, cors_allowed_origins="*")
+```
+
+### 2. Socket.IO 버전 호환성
+- 프론트엔드: socket.io-client@4.8.1
+- 백엔드: Flask-SocketIO@5.x 사용 권장
+
+### 3. 연결 상태 관리
+프론트엔드에서 연결 끊김 시 자동 재연결:
+```javascript
+socket = io(BACKEND_URL, {
+  autoConnect: false,
+  reconnection: true,
+  reconnectionDelay: 1000
+});
+```
+
+### 4. 이벤트 네임스페이스
+현재는 기본 네임스페이스('/') 사용 중
+필요시 네임스페이스 분리 가능:
+```python
+@socketio.on('connect', namespace='/sensors')
+```
+
+### 5. 메모리 관리
+장시간 실행 시 연결된 클라이언트 수 모니터링
+필요시 연결 제한 설정
+
+### 6. 에러 처리
+Socket.IO 연결 실패 시 가상 모드로 폴백:
+```javascript
+socket.on('connect_error', () => {
+  setConnectionMode('virtual');
+});
+```
+
+### 7. 보안
+프로덕션 환경에서는:
+```python
+socketio.init_app(app,
+  cors_allowed_origins=["https://your-domain.com"]
+)
+```
+
+### 8. 로깅
+디버깅용 로그 추가:
+```python
+socketio = SocketIO(logger=True, engineio_logger=True)
+```
+
+==============================================
+## 개발 vs 프로덕션
+==============================================
+
+### 개발 환경:
+- CORS: "*" (모든 도메인 허용)
+- Debug: True
+- Auto-reload: 활성화
+- Logger: 활성화
+
+### 프로덕션 환경:
+- CORS: 특정 도메인만 허용
+- Debug: False
+- Gunicorn + eventlet 사용:
+  ```bash
+  gunicorn --worker-class eventlet -w 1 run:app
+  ```
+- Logger: 파일로 저장
+- SSL/TLS 적용
+
+==============================================
+## 예상 문제 및 해결책
+==============================================
+
+### 문제 1: "SocketIO is not defined"
+**원인:** Flask-SocketIO 미설치
+**해결:** pip install flask-socketio
+
+### 문제 2: 클라이언트 연결 안됨
+**원인:** CORS 설정 누락
+**해결:** cors_allowed_origins="*" 추가
+
+### 문제 3: 이벤트 수신 안됨
+**원인:** 이벤트 이름 불일치
+**해결:** 프론트/백 이벤트명 확인
+- 'new_sun_data' (정확히 일치해야 함)
+- 'relay_status_update' (정확히 일치해야 함)
+
+### 문제 4: 포트 충돌
+**원인:** 5000번 포트 이미 사용 중
+**해결:** 다른 포트 사용 또는 기존 프로세스 종료
+```bash
+lsof -ti:5000 | xargs kill -9
+```
+
+### 문제 5: 자동 재연결 안됨
+**원인:** autoConnect: false + connect() 미호출
+**해결:** 조건부로 socket.connect() 호출
+
+==============================================
+요약: 실시간 동작을 위한 최소 필요사항
+==============================================
+
+1. ✅ 백엔드에 Flask-SocketIO 설치
+2. ✅ app/__init__.py에 SocketIO 초기화
+3. ✅ run.py에서 socketio.run() 사용
+4. ✅ socket_events.py 생성 (이벤트 핸들러)
+5. ✅ 서비스에서 broadcast 함수 호출
+6. ✅ 프론트엔드는 이미 준비됨 (수정 불필요)
+7. ✅ MySQL DB 실행 중
+8. ✅ .env 파일 설정 완료
+
+이 모든 것이 완료되면:
+→ 실시간 양방향 통신 가능
+→ 다중 클라이언트 동시 업데이트
+→ 가상/실제 모드 자동 전환
+→ 아두이노 데이터 즉시 반영
+
+==============================================
+END
+==============================================

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { dataAPI } from '../api/dataAPI';
 import { relayAPI } from '../api/relayAPI';
+import { channelAPI } from '../api/channelAPI';
 import { usePolling } from '../hooks/usePolling';
 import turnoff from '../../img/turnoff.png';
 import turnon from '../../img/turnon.png';
@@ -14,6 +15,7 @@ function Trade() {
   const [connectionMode, setConnectionMode] = useState('virtual');
   const [houseEnergy, setHouseEnergy] = useState({ A: 0, B: 0, C: 0, D: 0 });
   const [isHoverSell, setIsHoverSell] = useState(false);
+  const [optimal, setOptimal] = useState({ A: 0, B: 0, C: 0, D: 0 });
 
   const houses = ["A", "B", "C", "D"];
   const PRICE_PER_WATT = 140;
@@ -33,6 +35,7 @@ function Trade() {
   useEffect(() => {
     loadLocalData();
     checkBackendConnection();
+    fetchOptimalChannels();
   }, []);
 
   useEffect(() => {
@@ -65,6 +68,21 @@ function Trade() {
       localStorage.setItem('solarData', JSON.stringify(solarData));
     }
   }, [backendRelayStatus, connectionMode]);
+
+  const fetchOptimalChannels = async () => {
+    try {
+      const houseEnergy = JSON.parse(localStorage.getItem('houseEnergy') || '{}');
+      const totalTarget = Object.values(houseEnergy).reduce((sum, val) => sum + val, 0);
+
+      const result = await channelAPI.getOptimal(totalTarget);
+      if (result.optimal_channels) {
+        setOptimal(result.optimal_channels);
+      }
+    } catch (error) {
+      console.error('Failed to fetch optimal channels:', error);
+      setOptimal({ A: 0, B: 0, C: 0, D: 0 });
+    }
+  };
 
   const loadLocalData = () => {
     const solarData = JSON.parse(localStorage.getItem('solarData') || '{}');
@@ -216,6 +234,10 @@ function Trade() {
           : '🟡 가상 모드 (로컬 데이터 사용 - EnvSetting과 동기화)'}
       </div>
 
+      <div style={{ textAlign: 'center', marginBottom: '10px', fontSize: '16px', fontWeight: 'bold', color: '#555' }}>
+        최적의 판매 가구조합은 각 가구 위의 전구로 표시됩니다!
+      </div>
+
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', marginBottom: '40px' }}>
         <button
           style={{
@@ -242,8 +264,21 @@ function Trade() {
         <div style={{ display: 'flex', gap: '20px' }}>
           {houses.map((house) => {
             const isSelected = selectedHouses.includes(house);
+            const isOptimal = optimal[house] > 0;
+            
             return (
-              <div key={house} style={{ textAlign: 'center' }}>
+              <div 
+                key={house} 
+                style={{ 
+                  textAlign: 'center' 
+                  // 수정됨: 불투명도(opacity) 조절 스타일 삭제. 
+                  // 이제 모든 가구가 선명하게 보입니다.
+                }}
+              >
+                {/* 최적 조합인 경우에만 전구 아이콘 표시 */}
+                <div style={{ height: '30px', fontSize: '24px', marginBottom: '5px' }}>
+                  {isOptimal ? '💡' : ''}
+                </div>
                 <img
                   src={isSelected ? turnon : turnoff}
                   alt={house}

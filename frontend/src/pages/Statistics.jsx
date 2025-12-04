@@ -1,20 +1,9 @@
 import { useState, useEffect } from 'react';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { dataAPI } from '../api/dataAPI';
 import { energyAPI } from '../api/energyAPI';
 import { channelAPI } from '../api/channelAPI';
 import { usePolling } from '../hooks/usePolling';
-
-const DUMMY_ENERGY_DATA = [
-  { time: '00:00', A가구: 12, B가구: 8, C가구: 10, D가구: 7 },
-  { time: '03:00', A가구: 10, B가구: 6, C가구: 8, D가구: 5 },
-  { time: '06:00', A가구: 15, B가구: 10, C가구: 12, D가구: 9 },
-  { time: '09:00', A가구: 20, B가구: 15, C가구: 17, D가구: 13 },
-  { time: '12:00', A가구: 25, B가구: 18, C가구: 21, D가구: 16 },
-  { time: '15:00', A가구: 22, B가구: 16, C가구: 19, D가구: 14 },
-  { time: '18:00', A가구: 18, B가구: 12, C가구: 15, D가구: 11 },
-  { time: '21:00', A가구: 14, B가구: 9, C가구: 11, D가구: 8 },
-];
 
 const DUMMY_HOURLY_DATA = [
   { hour: '00시', 오늘: 5, 어제: 4 },
@@ -27,7 +16,7 @@ const DUMMY_HOURLY_DATA = [
 function Statistics() {
   const [connectionMode, setConnectionMode] = useState('virtual');
   const [optimal, setOptimal] = useState({ A: 0, B: 0, C: 0, D: 0 });
-  const [predictedEnergy, setPredictedEnergy] = useState(0);
+  const [predictedEnergies, setPredictedEnergies] = useState([0, 0, 0]);
   const [currentLux, setCurrentLux] = useState(0);
 
   const { data: sensorData, error: sensorError } = usePolling(
@@ -56,7 +45,7 @@ function Statistics() {
     if (connectionMode === 'real' && sensorData) {
       setCurrentLux(sensorData.lux || 0);
       fetchOptimalChannels();
-      fetchPredictedEnergy(sensorData.lux || 0);
+      fetchPredictedMultiEnergy(sensorData.lux || 0);
     }
   }, [sensorData, connectionMode]);
 
@@ -69,7 +58,7 @@ function Statistics() {
           setConnectionMode('real');
           setCurrentLux(data.lux || 0);
           fetchOptimalChannels();
-          fetchPredictedEnergy(data.lux || 0);
+          fetchPredictedMultiEnergy(data.lux || 0);
         } else {
           setConnectionMode('virtual');
         }
@@ -96,15 +85,17 @@ function Statistics() {
     }
   };
 
-  const fetchPredictedEnergy = async (lux) => {
+  const fetchPredictedMultiEnergy = async (lux) => {
     try {
-      const result = await energyAPI.getPredicted(lux);
-      if (result.predicted_energy !== undefined) {
-        setPredictedEnergy(result.predicted_energy);
+      const result = await energyAPI.getPredictedMulti(lux);
+      if (result && result.predicted_energies) {
+        setPredictedEnergies(result.predicted_energies);
+      } else {
+         setPredictedEnergies([10, 15, 20]);
       }
     } catch (error) {
       console.error('Failed to fetch predicted energy:', error);
-      setPredictedEnergy(10);
+      setPredictedEnergies([10, 15, 20]);
     }
   };
 
@@ -119,15 +110,22 @@ function Statistics() {
     return DUMMY_HOURLY_DATA;
   };
 
+  // 변경됨: 가구별 단순 총량 데이터 포맷 (막대 4개용)
   const formatEnergyData = () => {
     const houseEnergy = JSON.parse(localStorage.getItem('houseEnergy') || '{}');
+    
+    // 데이터가 없으면 0으로 처리
+    const A = houseEnergy.A || 0;
+    const B = houseEnergy.B || 0;
+    const C = houseEnergy.C || 0;
+    const D = houseEnergy.D || 0;
 
-    if (connectionMode === 'real') {
-      return [
-        { time: '현재', A가구: houseEnergy.A || 0, B가구: houseEnergy.B || 0, C가구: houseEnergy.C || 0, D가구: houseEnergy.D || 0 }
-      ];
-    }
-    return DUMMY_ENERGY_DATA;
+    return [
+      { name: 'A가구', value: A, fill: '#FFD900' },
+      { name: 'B가구', value: B, fill: '#82ca9d' },
+      { name: 'C가구', value: C, fill: '#DCDCDC' },
+      { name: 'D가구', value: D, fill: '#515151' },
+    ];
   };
 
   const luxToInsolation = (lux) => {
@@ -150,21 +148,6 @@ function Statistics() {
           : '🟡 가상 모드 (더미 데이터 사용)'}
       </div>
 
-      {/* 최적 조합 안내 */}
-      <div style={{ marginBottom: '60px', padding: '20px', backgroundColor: '#f8f9fa' }}>
-        <p style={{ fontSize: '16px', color: '#666', marginBottom: '10px' }}>
-          {connectionMode === 'real' ? 'ML 모델 분석 결과 - 현재 최적의 판매 조합은...' : '가상 데이터 - 예시 판매 조합'}
-        </p>
-        <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#333' }}>
-          A가구에 {optimal.A}와트, B가구에 {optimal.B}와트, C가구에 {optimal.C}와트, D가구에 {optimal.D}와트
-        </p>
-        {connectionMode === 'real' && (
-          <p style={{ fontSize: '12px', color: '#666', marginTop: '10px' }}>
-            * 백엔드 ML 모델(RandomForest)이 계산한 최적 조합입니다
-          </p>
-        )}
-      </div>
-
       {/* 일사량 정보 */}
       <div style={{ marginBottom: '60px', padding: '20px', backgroundColor: '#f8f9fa' }}>
         <p style={{ fontSize: '16px', color: '#666', marginBottom: '10px' }}>
@@ -175,7 +158,7 @@ function Statistics() {
         </p>
         {connectionMode === 'real' && (
           <p style={{ fontSize: '16px', color: '#666', marginTop: '10px' }}>
-            ML 모델 예측 발전량: {predictedEnergy.toFixed(2)} W
+            ML 모델 예측 발전량: 1시간 뒤 {predictedEnergies[0]}W, 2시간 뒤 {predictedEnergies[1]}W, 3시간 뒤 {predictedEnergies[2]}W
           </p>
         )}
         {connectionMode === 'virtual' && (
@@ -185,9 +168,8 @@ function Statistics() {
         )}
       </div>
 
-      {/* 차트 세로로 배치 */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
-        {/* 가구별 에너지 보유량 차트 */}
+        {/* 변경됨: 가구별 총 판매량 차트 (막대 4개) */}
         <div style={{
           backgroundColor: '#FFFFFF',
           padding: '20px'
@@ -198,20 +180,22 @@ function Statistics() {
             marginBottom: '20px',
             color: '#333'
           }}>
-            가구별 에너지 보유량 차트
+            각 가구별 현재 판매 누적량
             {connectionMode === 'real' && <span style={{ fontSize: '14px', color: '#666', marginLeft: '10px' }}>(실시간 데이터)</span>}
           </h2>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={formatEnergyData()}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="time" />
+              <XAxis dataKey="name" />
               <YAxis label={{ value: 'Watt', angle: -90, position: 'insideLeft' }} />
               <Tooltip />
               <Legend />
-              <Bar dataKey="A가구" fill="#FFD900" />
-              <Bar dataKey="B가구" fill="#82ca9d" />
-              <Bar dataKey="C가구" fill="#DCDCDC" />
-              <Bar dataKey="D가구" fill="#515151" />
+              {/* 셀(Cell)을 사용하여 각 막대별 색상 지정 */}
+              <Bar dataKey="value" name="판매량">
+                {formatEnergyData().map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.fill} />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>

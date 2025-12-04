@@ -1,0 +1,467 @@
+==============================================
+SOLAR ESS MANAGER - PROJECT ANALYSIS MEMO
+Date: 2025-12-01
+Analyst: Claude Code Deep Re-Read
+==============================================
+
+## PROJECT OVERVIEW
+Solar ESS Manager (S.E.M) - Smart energy management platform for solar PV systems
+Team: "Watt's Up?" (OWK, ATH, LMG, YTH, CHY)
+Current Branch: owk (development)
+Main Branch: main
+
+==============================================
+## SIGNIFICANT UNCOMMITTED CHANGES DETECTED
+==============================================
+
+### BACKEND MAJOR REFACTORING (In Progress)
+The git diff shows EXTENSIVE backend changes that are NOT YET COMMITTED:
+
+1. **Service Layer Complete Restructure**
+   - Added new error handling system (DBException class, handle_errors decorator)
+   - Created db_transaction context manager for better DB connection management
+   - Moved config.json from services/ to config/ folder (config_arduino.json)
+   - Added CHANNEL_CONFIG global variable in common_service.py
+
+2. **New Scheduled Tasks System**
+   - Added APScheduler to __init__.py
+   - New function: aggregate_old_data (runs hourly at minute 0)
+   - Scheduler only runs on main Werkzeug process
+
+3. **Database Schema Changes**
+   - New tables: sun_data_realtime, sun_data_hourly
+   - Old table still exists: sun_data
+   - Hourly aggregation system for historical data
+
+4. **API Route Changes**
+   - /api/relay/control NOW returns DB status (changed from controlling relay)
+   - NEW endpoint: /api/relay/update for relay control
+   - Energy prediction now uses separate service functions
+   - Better error messages (English, not Korean)
+
+5. **Sensor Service Major Update**
+   - Added aggregate_old_data() function for data archiving
+   - Data validation improved (range checks: 0 <= soc <= 100, etc.)
+   - Separates realtime vs hourly data storage
+
+6. **Relay Service Restructure**
+   - New function: reset_relay() - auto-resets all relays to OFF on startup
+   - New function: save_relay_state_changes() - handles OFF->ON transitions
+   - Removed direct Arduino communication from main flow
+   - Better error handling with decorators
+
+7. **.gitignore Update**
+   - Added test.py to ignore list
+
+### FRONTEND CHANGES (Modified Files)
+
+**Home.jsx** (Modified)
+- No functional changes detected
+- Uses framer-motion for scroll animations
+- 7 sections with Korean content
+- Placeholder GitHub URL: https://github.com/example/Solar-ESS-Manager
+
+**Trade.jsx** (Modified)
+- Line 73-80: NEW CODE - reads houseEnergy from localStorage
+- Synchronizes with EnvSetting page for per-house energy values
+- Virtual vs Real mode switching based on backend availability
+- Uses Socket.IO for real-time updates
+- localStorage persistence for: solarData, houseEnergy, cashBalance, tradeHistory
+- PRICE_PER_WATT: 140 won (hardcoded)
+- Each house gets 100W per transaction (hardcoded)
+
+**EnvSetting.jsx** (Modified)
+- Line 165: NEW CODE - Saves houseEnergy to localStorage on clean
+- Line 234-236: NEW CODE - setRelayPower now saves to houseEnergy localStorage
+- Line 254-256: NEW CODE - fillDefaultStats also sets houseEnergy
+- Default values: A:50W, B:100W, C:75W, D:120W
+- Connection check: data must be < 5 minutes old to be "real"
+- Virtual mode stores all data in localStorage
+
+### UNTRACKED FILES
+- frontend/img/dfdfd.af (unknown image file)
+- node_modules/ (should be in .gitignore)
+- package.json + package-lock.json at root (Socket.IO client dependency)
+
+==============================================
+## DETAILED CODE ARCHITECTURE
+==============================================
+
+### FRONTEND STRUCTURE
+
+**Pages:**
+1. Home.jsx - 7-section animated introduction
+   - Uses wheel event for section navigation
+   - Framer Motion slideVariants animation
+   - Team info includes emails for all 5 members
+   - Tech stack table shows: JavaScript, Python, React, Express
+
+2. Statistics.jsx - Dashboard with dummy data
+   - DUMMY_ENERGY_DATA: 8 time points (00:00-21:00)
+   - DUMMY_HOURLY_DATA: 5 time points (00시-24시)
+   - Bar chart: 4 houses (A, B, C, D) with colors #FFD900, #82ca9d, #DCDCDC, #515151
+   - Line chart: Today vs Yesterday comparison
+   - Hardcoded optimal values: A:10W, B:3W, C:5W, D:2W
+   - Hardcoded solar irradiance: 10 MJ/㎡
+   - Note: Resets at midnight (00시에 초기화)
+
+3. Trade.jsx - Core trading functionality
+   - BACKEND_URL: http://localhost:5000
+   - Socket events: relay_status_update, new_sun_data
+   - Energy balance calculated from SOC: (soc/100) * 10000
+   - Default cash: 48020 won
+   - Transaction structure: {date, houses, watt, price}
+   - Color scheme: Yellow (#FFB300) for selected houses
+
+4. EnvSetting.jsx - Configuration page
+   - Three connection states: 'checking', 'real', 'virtual'
+   - Real mode: backend OK + Arduino data < 5min old
+   - Virtual mode: uses localStorage
+   - Manual settings for: SOC, solar_w, lux, cash, A/B/C/D power
+   - Auto mode: random values (SOC: 60-100%, solar: 50-200W, lux: 20000-50000)
+   - Clean function: resets everything to 0
+   - Default stats: SOC:80%, solar:150W, lux:35000, cash:48020
+
+5. Arduino.jsx - Reference documentation (placeholder)
+   - 3 tabs: CIRCUITS, VIDEO, FLOWCHART
+
+**Components:**
+- Navbar.jsx - Navigation component
+
+**Dependencies (package.json):**
+- react: 19.2.0
+- react-dom: 19.2.0
+- recharts: 3.4.1 (for charts)
+- socket.io-client: 4.8.1 (for real-time)
+- motion: 12.23.24 (Framer Motion)
+- vite: 7.2.2 (dev/build)
+
+### BACKEND STRUCTURE (FLASK)
+
+**Entry Point:**
+- run.py (not read, but exists)
+
+**App Factory:**
+- app/__init__.py
+  - Creates Flask app
+  - Registers 4 blueprints
+  - Sets up APScheduler (hourly data aggregation)
+  - CORS enabled for /api/*
+
+**Blueprints:**
+1. data_routes.py
+   - GET /api/data/latest - get latest sensor data
+   - POST /api/data/solar - receive Arduino data
+   - GET /api/data/history - get trade history (filters: user_id, start_date, end_date, date)
+
+2. relay_routes.py (CHANGED)
+   - POST /api/relay/update - update relay state (NEW)
+   - GET /api/relay/status - get current relay status
+   - POST /api/relay/control - return DB relay state for Arduino (CHANGED)
+
+3. channels_routes.py
+   - POST /api/channels/available - get available channels
+   - POST /api/channels/optimal - get optimal combination
+
+4. energy_routes.py
+   - POST /api/energy/predict - ML prediction (1h, 2h, 3h)
+
+**Services:**
+1. sensor_service.py
+   - get_latest_sensor_data() - reads from sun_data_realtime
+   - save_sensor_data() - saves to sun_data_realtime
+   - aggregate_old_data() - moves old data to sun_data_hourly (NEW)
+
+2. relay_service.py
+   - update_relay_status_in_db() - saves relay state
+   - insert_trade_history() - saves trade record
+   - get_trade_history() - queries trade_history table
+   - get_current_relay_status() - reads relay_status table
+   - send_to_arduino() - HTTP POST to Arduino
+   - get_active_relay_list() - filters ON relays
+   - reset_relay() - sets all relays OFF (NEW)
+   - save_relay_state_changes() - handles OFF->ON transitions (NEW)
+
+3. channels_service.py
+   - get_optimal_combination() - finds best power distribution
+   - get_available_channels() - checks which channels can be activated
+   - Uses itertools.combinations for all possibilities
+   - Battery protection: blocks sales if SOC < 10%
+
+4. energy_service.py
+   - get_latest_sensor_data_for_model() - fetches data for ML
+   - predict_solar_generation() - runs RandomForest prediction
+   - lux_to_insolation() - converts lux to MJ/㎡ (lux * 0.0079 * 0.0036)
+   - Model loaded with @lru_cache (once only)
+   - Model path: models/rf_production_model.pkl (CHANGED from rf_best_model.pkl)
+
+5. common_service.py (MAJOR CHANGES)
+   - get_buyer_id_from_channel() - maps A->1, B->2, C->3, D->4
+   - CHANNEL_CONFIG - global dict from config file
+   - DBException - custom exception class (NEW)
+   - handle_errors() - decorator for error handling (NEW)
+   - db_transaction() - context manager for DB operations (NEW)
+
+**Database:**
+- db.py - MySQL connector
+- Uses environment variables: DB_HOST, DB_USER, DB_PASSWORD, DB_DATABASE
+- Returns cursor with dictionary=True
+
+**Configuration:**
+- config/config_arduino.json (MOVED from services/config.json)
+  - battery_capacity_wh: 11.1
+  - channel_config: A:10W, B:30W, C:25W, D:30W
+  - duration_minutes: 5
+  - battery_protection_threshold: 10%
+
+### MACHINE LEARNING
+
+**Model:**
+- Type: RandomForest Regressor
+- Location: models/rf_production_model.pkl (55MB expected)
+- Training script: ml/model_train_rf.py
+
+**Features:**
+1. year
+2. month
+3. day
+4. time (hour)
+5. generation (current solar_w)
+6. prev_generation (1 hour ago)
+7. yesterday_generation (same hour yesterday)
+8. insolation (converted from lux)
+
+**Output:**
+- 3 predictions: 1h, 2h, 3h ahead generation (watts)
+- Rounded to 2 decimal places
+
+**Data Pipeline:**
+1. Fetch from sun_data_realtime (current)
+2. LAG query for 1h previous (prev_generation)
+3. Query sun_data_hourly for yesterday same hour
+4. Convert lux -> insolation
+5. Model.predict() returns (1, 3) array
+6. Return {1h: float, 2h: float, 3h: float}
+
+### DATABASE SCHEMA (MySQL)
+
+**Tables (NEW STRUCTURE):**
+1. sun_data_realtime - Real-time sensor data
+   - soc (battery %)
+   - solar_w (power generation)
+   - lux (light intensity)
+   - timestamp
+
+2. sun_data_hourly - Hourly aggregated data (NEW)
+   - date
+   - hour
+   - avg_soc
+   - avg_solar_w
+   - avg_lux
+
+3. sun_data - Original table (still exists)
+
+4. relay_status - Relay states
+   - relay_name (A, B, C, D)
+   - status (on/off)
+
+5. trade_history - Transaction log
+   - id
+   - buyer_id (1, 2, 3, 4)
+   - amount (watts)
+   - timestamp
+
+==============================================
+## KEY BUSINESS LOGIC
+==============================================
+
+### Energy Trading Flow:
+1. User selects houses (A, B, C, D)
+2. Each house = 100W
+3. Check if energyBalance >= totalWatt
+4. Update relay status (OFF -> ON = new trade)
+5. Calculate totalPrice = totalWatt * 140
+6. Deduct energy, add cash
+7. Record transaction with timestamp
+8. Sync to backend (if real mode)
+
+### Channel Optimization:
+1. Calculate available power = battery_w + solar_w
+   - battery_w = (battery_capacity_wh * soc/100) / (duration_min/60)
+2. Generate all combinations (1-4 channels)
+3. Filter valid combos (total_power <= available_power)
+4. Select best: max(channels count, then max(power))
+5. If SOC < 10%, return all channels False
+
+### Data Aggregation (NEW):
+- Runs every hour at :00
+- Moves sun_data_realtime -> sun_data_hourly
+- Groups by date + hour
+- Calculates AVG for soc, solar_w, lux
+
+### Real vs Virtual Mode:
+**Real Mode:**
+- Backend responds to /api/data/latest
+- Data timestamp < 5 minutes old
+- Socket.IO connected
+- Updates propagate to DB
+
+**Virtual Mode:**
+- localStorage only
+- No backend communication
+- Fully functional offline testing
+- Syncs when backend reconnects
+
+==============================================
+## POTENTIAL ISSUES & NOTES
+==============================================
+
+1. **CRITICAL: Model File Mismatch**
+   - energy_service.py expects: rf_production_model.pkl
+   - May need to verify actual model file name
+
+2. **Uncommitted Changes**
+   - HUGE backend refactor in progress
+   - API contract changes (/api/relay/control behavior changed)
+   - Frontend may break if backend is committed without frontend updates
+
+3. **node_modules in Root**
+   - Root package.json only has socket.io-client
+   - Should be in .gitignore but isn't
+   - Possibly for testing purposes
+
+4. **Hardcoded Values**
+   - PRICE_PER_WATT: 140 (in Trade.jsx)
+   - Default cash: 48020 (in multiple places)
+   - Watt per house: 100 (in Trade.jsx)
+   - Battery capacity: 11.1Wh (in config)
+
+5. **Statistics Page**
+   - Uses 100% dummy data
+   - No backend integration
+   - Hardcoded optimal values
+   - Hardcoded solar irradiance value
+
+6. **GitHub URL**
+   - Placeholder in Home.jsx: https://github.com/example/Solar-ESS-Manager
+   - Should be updated to real repo
+
+7. **Tech Stack Discrepancy**
+   - Home.jsx says: "React, Express"
+   - Actually uses: React, Flask
+   - Should update to "React, Flask"
+
+8. **Database Tables**
+   - Multiple sun_data tables (realtime, hourly, original)
+   - Migration strategy unclear
+   - Old code may still reference sun_data instead of sun_data_realtime
+
+9. **Socket.IO**
+   - Backend previously had SocketIO (removed in uncommitted changes?)
+   - Frontend still expects Socket.IO events
+   - Potential disconnect if backend changes are committed
+
+10. **Language Mixing**
+    - UI: Korean
+    - Code comments: Korean
+    - API error messages: Now English (NEW)
+    - Console logs: Korean
+
+==============================================
+## FILE LOCATIONS REFERENCE
+==============================================
+
+Frontend:
+- /frontend/src/pages/Home.jsx
+- /frontend/src/pages/Statistics.jsx
+- /frontend/src/pages/Trade.jsx
+- /frontend/src/pages/EnvSetting.jsx
+- /frontend/src/pages/Arduino.jsx
+- /frontend/src/components/Navbar.jsx
+- /frontend/package.json
+
+Backend:
+- /backend/api/app/__init__.py
+- /backend/api/app/db.py
+- /backend/api/app/routers/data_routes.py
+- /backend/api/app/routers/relay_routes.py
+- /backend/api/app/routers/channels_routes.py
+- /backend/api/app/routers/energy_routes.py
+- /backend/api/app/services/sensor_service.py
+- /backend/api/app/services/relay_service.py
+- /backend/api/app/services/channels_service.py
+- /backend/api/app/services/energy_service.py
+- /backend/api/app/services/common_service.py
+- /backend/api/app/config/config_arduino.json (MOVED)
+- /backend/api/run.py
+
+ML:
+- /ml/model_train_rf.py
+- /models/rf_production_model.pkl (expected)
+- /models/rf_best_model.pkl (may exist)
+
+==============================================
+## RECENT COMMITS
+==============================================
+
+c88b127 (HEAD) 2025-11-24 OWK: 중간커밋
+68aa643 2025-11-20 OWK: daily commit
+53d04f0 2025-11-19 OWK: 가상환경 세팅 수정 및 거래 화면 수정
+d79ba1a 2025-11-11 OWK: UI 개선
+27cb5ae 2025-11-13 OWK: 일부 페이지 UI 다듬기
+54eebdb 2025-11-11 OWK: 전체적인 진행 및 코드 정리
+
+==============================================
+## SUMMARY OF CHANGES FROM FIRST READ
+==============================================
+
+**NEW FINDINGS:**
+
+1. **MASSIVE Uncommitted Backend Refactor**
+   - Complete service layer restructuring
+   - New error handling system with decorators
+   - Database schema changes (realtime vs hourly)
+   - API endpoint behavior changes
+   - Scheduled task system added
+
+2. **Frontend-Backend Synchronization**
+   - Trade.jsx and EnvSetting.jsx now sync via localStorage
+   - houseEnergy tracking added
+   - Better virtual/real mode separation
+
+3. **Model File Name Issue**
+   - Code references rf_production_model.pkl
+   - May differ from actual file
+
+4. **Statistics Page Details**
+   - Confirmed 100% dummy data
+   - No real backend integration
+   - Specific color codes documented
+
+5. **Configuration Migration**
+   - config.json moved from services/ to config/
+   - Now called config_arduino.json
+
+6. **Relay Control Flow Changed**
+   - /api/relay/control repurposed
+   - New /api/relay/update endpoint
+   - Reset on startup functionality
+
+7. **Data Aggregation System**
+   - APScheduler integration
+   - Hourly aggregation to separate table
+   - Better historical data management
+
+**CONFIRMED FROM FIRST READ:**
+- Team structure (5 members)
+- Tech stack (React + Flask, not Express)
+- Core features (trading, statistics, predictions)
+- Virtual/Real mode architecture
+- Socket.IO for real-time updates
+- ML model (RandomForest)
+- Battery protection logic
+- Channel optimization algorithm
+
+==============================================
+END OF MEMO
+==============================================
