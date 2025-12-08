@@ -77,15 +77,11 @@ function EnvSetting() {
     try {
       const data = await dataAPI.getLatest();
 
-      if (data.timestamp) {
-        const diffMinutes = (new Date() - new Date(data.timestamp)) / (1000 * 60);
-        if (diffMinutes < 5) {
-          setConnectionMode('real');
-          updateCurrentData(data);
-        } else {
-          setConnectionMode('virtual');
-          loadVirtualData();
-        }
+      // 변경됨: 타임스탬프 검증 제거, API 응답만 성공하면 실시간 모드
+      // 백엔드 통신이 정상이면 데이터 신선도와 무관하게 실시간 모드로 간주
+      if (data) {
+        setConnectionMode('real');
+        updateCurrentData(data);
       } else {
         setConnectionMode('virtual');
         loadVirtualData();
