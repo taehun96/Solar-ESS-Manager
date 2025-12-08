@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { dataAPI } from '../api/dataAPI';
 import { relayAPI } from '../api/relayAPI';
 import { channelAPI } from '../api/channelAPI';
@@ -119,22 +119,18 @@ function Trade() {
     try {
       const data = await dataAPI.getLatest();
 
-      if (data.timestamp) {
-        const diffMinutes = (new Date() - new Date(data.timestamp)) / (1000 * 60);
+      // 변경됨: 타임스탬프 검증 제거, API 응답만 성공하면 실시간 모드
+      // 백엔드 통신이 정상이면 데이터 신선도와 무관하게 실시간 모드로 간주
+      if (data) {
+        setConnectionMode('real');
 
-        if (diffMinutes < 5) {
-          setConnectionMode('real');
-
-          if (data.soc) {
-            const energyInWatt = (data.soc / 100) * 10000;
-            setEnergyBalance(energyInWatt);
-          }
-
-          const relayData = await relayAPI.getStatus();
-          setRelayStatus(relayData);
-        } else {
-          setConnectionMode('virtual');
+        if (data.soc !== undefined) {
+          const energyInWatt = (data.soc / 100) * 10000;
+          setEnergyBalance(energyInWatt);
         }
+
+        const relayData = await relayAPI.getStatus();
+        setRelayStatus(relayData);
       } else {
         setConnectionMode('virtual');
       }
@@ -203,10 +199,24 @@ function Trade() {
     localStorage.setItem('tradeHistory', JSON.stringify(newHistory));
 
     const solarData = JSON.parse(localStorage.getItem('solarData') || '{}');
-    solarData.soc = (newEnergyBalance / 10000) * 100;
+    const newSoc = (newEnergyBalance / 10000) * 100;
+    solarData.soc = newSoc;
     solarData.relays = newRelayStatus;
-    solarData.timestamp = new Date().toISOString();
     localStorage.setItem('solarData', JSON.stringify(solarData));
+
+    // 실시간 모드일 때만 백엔드에 SOC 업데이트
+    if (connectionMode === 'real') {
+      try {
+        await dataAPI.updateSolar(
+          newSoc,
+          solarData.solar_w || 0,
+          solarData.lux || 0
+        );
+      } catch (error) {
+        console.error('백엔드 SOC 업데이트 실패:', error);
+        // 에러가 나도 로컬 거래는 완료된 상태 유지
+      }
+    }
 
     alert(
       `✅ 판매 완료!\n` +
