@@ -13,8 +13,9 @@ function Trade() {
   const [cashBalance, setCashBalance] = useState(0);
   const [tradeHistory, setTradeHistory] = useState([]);
   const [connectionMode, setConnectionMode] = useState('virtual');
-  const [houseEnergy, setHouseEnergy] = useState({ A: 0, B: 0, C: 0, D: 0 });
+  const [houseEnergy, setHouseEnergy] = useState({ A: 0.6, B: 1.55, C: 0.93, D: 0.61 });
   const [isHoverSell, setIsHoverSell] = useState(false);
+  const [isHoverReset, setIsHoverReset] = useState(false);
   const [optimal, setOptimal] = useState({ A: 0, B: 0, C: 0, D: 0 });
 
   const houses = ["A", "B", "C", "D"];
@@ -22,13 +23,13 @@ function Trade() {
 
   const { data: sensorData, error: sensorError } = usePolling(
     dataAPI.getLatest,
-    5000,
+    10000,
     connectionMode === 'real'
   );
 
   const { data: backendRelayStatus } = usePolling(
     relayAPI.getStatus,
-    3000,
+    10000,
     connectionMode === 'real'
   );
 
@@ -99,14 +100,13 @@ function Trade() {
 
     if (solarData.relays) setRelayStatus(solarData.relays);
 
+    // EnvSetting에서 설정한 값이 있으면 사용, 없으면 기본값
     const savedHouseEnergy = JSON.parse(localStorage.getItem('houseEnergy') || '{}');
-    if (Object.keys(savedHouseEnergy).length > 0) {
-      setHouseEnergy(savedHouseEnergy);
-    } else {
-      const initialEnergy = { A: 0, B: 0, C: 0, D: 0 };
-      setHouseEnergy(initialEnergy);
-      localStorage.setItem('houseEnergy', JSON.stringify(initialEnergy));
-    }
+    const defaultEnergy = { A: 0.6, B: 1.55, C: 0.93, D: 0.61 };
+
+    // localStorage 값이 있으면 사용, 없으면 기본값 사용 (저장은 하지 않음)
+    const currentEnergy = Object.keys(savedHouseEnergy).length > 0 ? savedHouseEnergy : defaultEnergy;
+    setHouseEnergy(currentEnergy);
 
     const savedCash = localStorage.getItem('cashBalance');
     setCashBalance(savedCash ? parseFloat(savedCash) : 48020);
@@ -163,8 +163,15 @@ function Trade() {
     const newRelayStatus = { ...relayStatus };
     selectedHouses.forEach(h => newRelayStatus[h] = true);
 
-    // 변경됨: relayAPI.control 호출 제거, 로컬 상태만 업데이트
-    // EnvSetting에서만 릴레이를 제어하도록 변경
+    if (connectionMode === 'real') {
+      try {
+        // 백엔드 형식에 맞게 전송: {A: true, B: false, C: false, D: false}
+        await relayAPI.control(newRelayStatus);
+      } catch {
+        alert('⚠️ 백엔드 연결 실패, 가상 모드로 전환됩니다.');
+        setConnectionMode('virtual');
+      }
+    }
 
     setRelayStatus(newRelayStatus);
 
@@ -229,6 +236,31 @@ function Trade() {
     alert('거래 내역이 삭제되었습니다.');
   };
 
+  // 리셋 버튼 추가
+  const resetAllRelays = async () => {
+    if (!window.confirm('모든 릴레이를 OFF 하시겠습니까?')) return;
+
+    const allOffStatus = { A: false, B: false, C: false, D: false };
+
+    if (connectionMode === 'real') {
+      try {
+        await relayAPI.control(allOffStatus);
+      } catch {
+        alert('⚠️ 백엔드 연결 실패, 가상 모드로 전환됩니다.');
+        setConnectionMode('virtual');
+      }
+    }
+
+    setRelayStatus(allOffStatus);
+
+    const solarData = JSON.parse(localStorage.getItem('solarData') || '{}');
+    solarData.relays = allOffStatus;
+    solarData.timestamp = new Date().toISOString();
+    localStorage.setItem('solarData', JSON.stringify(solarData));
+
+    alert('✅ 모든 릴레이가 OFF 되었습니다.');
+  };
+
   return (
     <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto', fontFamily: 'Arial, sans-serif' }}>
       <div style={{
@@ -249,27 +281,47 @@ function Trade() {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', marginBottom: '40px' }}>
-        <button
-          style={{
-            width: '120px',
-            height: '120px',
-            borderRadius: '50%',
-            backgroundColor: isHoverSell ? '#FFC700' : '#E0E0E0',
-            border: 'none',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-            fontSize: '18px',
-            color: '#222',
-            marginBottom: '100px',
-            marginTop: '100px',
-            transition: 'background-color 0.3s ease'
-          }}
-          onClick={handleSell}
-          onMouseEnter={() => setIsHoverSell(true)}
-          onMouseLeave={() => setIsHoverSell(false)}
-        >
-          SELL!
-        </button>
+        <div style={{ display: 'flex', gap: '20px', marginBottom: '50px', marginTop: '100px' }}>
+          <button
+            style={{
+              width: '120px',
+              height: '120px',
+              borderRadius: '50%',
+              backgroundColor: isHoverSell ? '#FFC700' : '#E0E0E0',
+              border: 'none',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              fontSize: '18px',
+              color: '#222',
+              transition: 'background-color 0.3s ease'
+            }}
+            onClick={handleSell}
+            onMouseEnter={() => setIsHoverSell(true)}
+            onMouseLeave={() => setIsHoverSell(false)}
+          >
+            SELL!
+          </button>
+          {/* 리셋 버튼 추가 */}
+          <button
+            style={{
+              width: '120px',
+              height: '120px',
+              borderRadius: '50%',
+              backgroundColor: isHoverReset ? '#FF5C5C' : '#E0E0E0',
+              border: 'none',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              fontSize: '18px',
+              color: isHoverReset ? '#FFF' : '#222',
+              transition: 'background-color 0.3s ease, color 0.3s ease'
+            }}
+            onClick={resetAllRelays}
+            onMouseEnter={() => setIsHoverReset(true)}
+            onMouseLeave={() => setIsHoverReset(false)}
+          >
+            RESET
+          </button>
+        </div>
 
         <div style={{ display: 'flex', gap: '20px' }}>
           {houses.map((house) => {

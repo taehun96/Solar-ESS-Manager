@@ -2,7 +2,7 @@ import { apiClient } from './client';
 
 export const relayAPI = {
   getStatus: () => apiClient.get('/api/relay/status'),
-  control: (channels, action) =>
-    apiClient.post('/api/relay/control', { channels, action }),
+  control: (relayStatus) =>
+    apiClient.post('/api/relay/update', relayStatus),
   reset: () => apiClient.post('/api/relay/reset'),
 };

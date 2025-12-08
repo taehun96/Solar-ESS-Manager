@@ -30,13 +30,13 @@ function EnvSetting() {
 
   const { data: sensorData, error: sensorError } = usePolling(
     dataAPI.getLatest,
-    5000,
+    10000,
     connectionMode === 'real'
   );
 
   const { data: backendRelayStatus } = usePolling(
     relayAPI.getStatus,
-    3000,
+    10000,
     connectionMode === 'real'
   );
 
@@ -152,7 +152,7 @@ function EnvSetting() {
     setCurrentData(resetData);
     localStorage.setItem('solarData', JSON.stringify(resetData));
     localStorage.setItem('cashBalance', '0');
-    localStorage.setItem('houseEnergy', JSON.stringify({ A: 0, B: 0, C: 0, D: 0 }));
+    localStorage.setItem('houseEnergy', JSON.stringify({ A: 0.6, B: 1.55, C: 0.93, D: 0.61 }));
 
     setCurrentCash(0);
     setVirtualSettings({ soc: '', solar_w: '', lux: '', cashBalance: '', relayA: '', relayB: '', relayC: '', relayD: '' });
@@ -238,7 +238,7 @@ function EnvSetting() {
     });
 
     localStorage.setItem('houseEnergy', JSON.stringify({
-      A: 50, B: 100, C: 75, D: 120
+      A: 0.6, B: 1.55, C: 0.93, D: 0.61
     }));
 
     alert('기본값으로 설정되었습니다!');
