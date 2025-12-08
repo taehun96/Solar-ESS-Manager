@@ -437,7 +437,7 @@ function Home() {
                 프로젝트 저장소
               </p>
               <a
-                href="https://github.com/example/Solar-ESS-Manager"
+                href="https://github.com/Q5dis/SolarESSManager"
                 target="_blank"
                 rel="noreferrer"
                 style={{
@@ -447,7 +447,7 @@ function Home() {
                   fontWeight: 'bold'
                 }}
               >
-                https://github.com/example/Solar-ESS-Manager
+                https://github.com/Q5dis/SolarESSManager
               </a>
             </div>
 
