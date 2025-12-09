@@ -437,13 +437,12 @@ with db_transaction() as (conn, cursor):
 
 ## 👥 팀원 구성
 
-| 이름 | 역할 | 담당 업무 | GitHub | Email |
-|:------:|:------:|:-----------:|:-------:|:-----:|
-| **오왕경** | 팀장 / Frontend | React UI/UX 설계, 실시간 차트 구현, 반응형 디자인 | [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/Q5dis) | qowkqowk@gmail.com |
-| **안태현** | ML Engineer / Backend | RandomForest 예측 모델, 데이터 전처리, Flask REST API 구현 | [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/taehyunan-99) | withblua@gmail.com |
-| **이민정** | Backend | Oracle 서버 구축, MySQL 설계, 서버 인프라 관리 | [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/naas0523) | naas0523@gmail.com |
-| **윤태훈** | Hardware | 아두이노 센서 회로, 릴레이 제어, HW-SW 통신 | [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/taehun96) | yun47873160@gmail.com |
-| **최하연** | Hardware | 아두이노 센서 회로, 릴레이 제어, HW-SW 통신 | [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/choi-hayeonn) | gkdus011020@gmail.com |
+|  | 오왕경 | 안태현 | 이민정 | 윤태훈 | 최하연 |
+|:---:|:---:|:---:|:---:|:---:|:---:|
+| **역할** | 팀장 / Frontend | ML Engineer / Backend | Backend | Hardware | Hardware |
+| **담당 업무** | React UI/UX 설계<br/>실시간 차트 구현<br/>반응형 디자인 | RandomForest 예측 모델<br/>데이터 전처리<br/>Flask REST API 구현 | Oracle 서버 구축<br/>MySQL 설계<br/>서버 인프라 관리 | 아두이노 센서 회로<br/>릴레이 제어<br/>HW-SW 통신 | 아두이노 센서 회로<br/>릴레이 제어<br/>HW-SW 통신 |
+| **GitHub** | [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/Q5dis) | [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/taehyunan-99) | [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/naas0523) | [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/taehun96) | [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/choi-hayeonn) |
+| **Email** | qowkqowk@gmail.com | withblua@gmail.com | naas0523@gmail.com | yun47873160@gmail.com | gkdus011020@gmail.com |
 
 ---
 
