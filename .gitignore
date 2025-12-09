@@ -9,5 +9,4 @@ __pycache__/
 # 보안 파일
 .env
 # 로컬 테스트용 파일
-test.py# 개인 메모 폴더
-memos/
+test.py
