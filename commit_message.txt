@@ -1,5 +1,0 @@
-**year-month-day NAME: detail**
-
-ex) 내 이름이 홍길동이라면 …
-
-2025-11-11 HGD: removed submit button
