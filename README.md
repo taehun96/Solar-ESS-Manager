@@ -16,10 +16,12 @@ AI 기반 태양광 에너지 저장 시스템(ESS) 관리 플랫폼 - RandomFor
 ## 📖 프로젝트 소개
 
 ### 개발 배경
-태양광 발전의 간헐성 문제를 해결하고, 가정 내 에너지 자립도를 높이기 위해 **에너지 저장 시스템(ESS)의 효율적 관리**가 필요합니다. 
+
+태양광 발전의 간헐성 문제를 해결하고, 가정 내 에너지 자립도를 높이기 위해 **에너지 저장 시스템(ESS)의 효율적 관리**가 필요합니다.
 본 프로젝트는 머신러닝 예측과 IoT 기술을 결합하여 에너지 생산-저장-분배를 자동화하는 스마트 솔루션을 제공합니다.
 
 ### 주요 특징
+
 - **ML 기반 발전량 예측**: RandomForest 모델로 1/2/3시간 후 태양광 발전량 예측
 - **실시간 IoT 모니터링**: 아두이노 센서를 통한 SOC(배터리 잔량), 발전량, 일사량 실시간 수집
 - **가구별 전력 분배**: 4채널 릴레이 제어로 최적의 에너지 판매 조합 자동 추천
@@ -62,20 +64,25 @@ AI 기반 태양광 에너지 저장 시스템(ESS) 관리 플랫폼 - RandomFor
 ### 웹 인터페이스
 
 #### 메인 홈페이지
+
 <img src="./readme_images/web_01.png" width="600">
 
 #### 전력 거래 페이지
+
 <img src="./readme_images/web_02.png" width="600">
 
 ### 하드웨어 구성
 
 #### 릴레이 채널별 테마 (1)
+
 <img src="./readme_images/arduino_01.jpeg" width="600">
 
 #### 릴레이 채널별 테마 (2)
+
 <img src="./readme_images/arduino_02.jpeg" width="600">
 
 #### 아두이노 회로 구성
+
 <img src="./readme_images/arduino_03.jpeg" width="600">
 
 ---
@@ -154,25 +161,30 @@ SolarESSManager/
 ## 🎯 기술 스택
 
 ### 🌐 Frontend
+
 [![React](https://img.shields.io/badge/React-19.2.0-61DAFB?style=flat&logo=react&logoColor=white)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-7.2.2-646CFF?style=flat&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Recharts](https://img.shields.io/badge/Recharts-3.4.1-FF6384?style=flat)](https://recharts.org/)
 [![Framer Motion](https://img.shields.io/badge/Framer_Motion-12.23.24-0055FF?style=flat&logo=framer&logoColor=white)](https://www.framer.com/motion/)
 
 ### 🔧 Backend
+
 [![Flask](https://img.shields.io/badge/Flask-000000?style=flat&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
 [![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=flat&logo=mysql&logoColor=white)](https://www.mysql.com/)
 
 ### 🤖 Machine Learning
+
 [![scikit-learn](https://img.shields.io/badge/scikit--learn-F7931E?style=flat&logo=scikit-learn&logoColor=white)](https://scikit-learn.org/)
 [![RandomForest](https://img.shields.io/badge/RandomForest-ML_Model-orange?style=flat)](https://scikit-learn.org/stable/modules/ensemble.html#forest)
 [![pandas](https://img.shields.io/badge/pandas-150458?style=flat&logo=pandas&logoColor=white)](https://pandas.pydata.org/)
 [![NumPy](https://img.shields.io/badge/NumPy-013243?style=flat&logo=numpy&logoColor=white)](https://numpy.org/)
 
 ### 🔌 Hardware
+
 [![Arduino](https://img.shields.io/badge/Arduino-00979D?style=flat&logo=arduino&logoColor=white)](https://www.arduino.cc/)
 
 ### ☁️ Deployment
+
 [![Vercel](https://img.shields.io/badge/Vercel-000000?style=flat&logo=vercel&logoColor=white)](https://vercel.com/)
 [![Oracle Cloud](https://img.shields.io/badge/Oracle_Cloud-F80000?style=flat&logo=oracle&logoColor=white)](https://www.oracle.com/cloud/)
 
@@ -181,6 +193,7 @@ SolarESSManager/
 ## 🚀 주요 기능
 
 ### 1. 실시간 센서 데이터 수집
+
 - **위치**: `backend/api/app/routers/data_routes.py`
 - **기능**:
   - 아두이노로부터 SOC, 발전량(W), 조도(lux) 데이터 수신
@@ -189,6 +202,7 @@ SolarESSManager/
 - **API**: `POST /api/data/solar`
 
 ### 2. 머신러닝 기반 발전량 예측
+
 - **위치**: `backend/api/app/services/energy_service.py`
 - **모델**: RandomForest Regressor
 - **입력 특성**:
@@ -202,6 +216,7 @@ SolarESSManager/
 - **API**: `GET /api/energy/predicted`
 
 ### 3. 최적 채널 조합 추천
+
 - **위치**: `backend/api/app/services/channels_service.py`
 - **알고리즘**: 배낭 문제(Knapsack Problem)
 - **제약 조건**:
@@ -211,12 +226,14 @@ SolarESSManager/
 - **API**: `GET /api/channels/optimal`
 
 ### 4. 릴레이 제어 시스템
+
 - **위치**: `backend/api/app/routers/relay_routes.py`
 - **웹 → 서버**: `POST /api/relay/update` (채널 상태 업데이트, 거래 내역 저장)
 - **아두이노 → 서버**: `GET /api/relay/control` (릴레이 상태를 "1010" 형식으로 반환)
 - **물리적 제어**: 아두이노가 릴레이 상태를 받아 실제 전력 분배
 
 ### 5. 실시간 대시보드
+
 - **위치**: `frontend/src/pages/Statistics.jsx`
 - **기능**:
   - Recharts 기반 실시간 차트
@@ -225,6 +242,7 @@ SolarESSManager/
   - ML 예측값과 실제값 비교 시각화
 
 ### 6. 전력 거래 시스템
+
 - **위치**: `frontend/src/pages/Trade.jsx`
 - **기능**:
   - 4개 가구(A, B, C, D) 중 판매 대상 선택
@@ -238,29 +256,33 @@ SolarESSManager/
 ## 🔌 API 엔드포인트
 
 ### 센서 데이터
-| Method | Endpoint | 설명 |
-|--------|----------|------|
-| `GET` | `/api/data/latest` | 최신 센서 데이터 조회 |
-| `POST` | `/api/data/solar` | 아두이노에서 센서 데이터 수신 (SOC, 발전량, 조도) |
-| `GET` | `/api/data/history` | 거래 내역 조회 (쿼리: user_id, start_date, end_date) |
+
+| Method | Endpoint            | 설명                                                 |
+| ------ | ------------------- | ---------------------------------------------------- |
+| `GET`  | `/api/data/latest`  | 최신 센서 데이터 조회                                |
+| `POST` | `/api/data/solar`   | 아두이노에서 센서 데이터 수신 (SOC, 발전량, 조도)    |
+| `GET`  | `/api/data/history` | 거래 내역 조회 (쿼리: user_id, start_date, end_date) |
 
 ### 에너지 예측
-| Method | Endpoint | 설명 |
-|--------|----------|------|
-| `GET` | `/api/energy/predicted` | ML 기반 1/2/3시간 후 발전량 예측 |
+
+| Method | Endpoint                | 설명                             |
+| ------ | ----------------------- | -------------------------------- |
+| `GET`  | `/api/energy/predicted` | ML 기반 1/2/3시간 후 발전량 예측 |
 
 ### 릴레이 제어
-| Method | Endpoint | 설명 |
-|--------|----------|------|
-| `POST` | `/api/relay/update` | 릴레이 상태 업데이트 (웹 → 서버) |
-| `GET` | `/api/relay/status` | 현재 릴레이 상태 조회 (웹용) |
-| `GET` | `/api/relay/control` | 릴레이 제어 문자열 반환 (아두이노용, 예: "1010") |
+
+| Method | Endpoint             | 설명                                             |
+| ------ | -------------------- | ------------------------------------------------ |
+| `POST` | `/api/relay/update`  | 릴레이 상태 업데이트 (웹 → 서버)                 |
+| `GET`  | `/api/relay/status`  | 현재 릴레이 상태 조회 (웹용)                     |
+| `GET`  | `/api/relay/control` | 릴레이 제어 문자열 반환 (아두이노용, 예: "1010") |
 
 ### 채널 최적화
-| Method | Endpoint | 설명 |
-|--------|----------|------|
-| `GET` | `/api/channels/available` | 현재 선택 가능한 채널 조회 |
-| `GET` | `/api/channels/optimal` | 최적 판매 조합 추천 (배낭 알고리즘) |
+
+| Method | Endpoint                  | 설명                                |
+| ------ | ------------------------- | ----------------------------------- |
+| `GET`  | `/api/channels/available` | 현재 선택 가능한 채널 조회          |
+| `GET`  | `/api/channels/optimal`   | 최적 판매 조합 추천 (배낭 알고리즘) |
 
 ---
 
@@ -294,12 +316,12 @@ python run.py
 
 #### 데이터베이스 구조
 
-| 테이블명 | 설명 | 주요 컬럼 |
-|---------|------|----------|
-| `sun_data_realtime` | 실시간 센서 데이터 저장 | timestamp, soc, solar_w, lux |
-| `sun_data_hourly` | 시간별 집계 데이터 | date, hour, avg_soc, avg_solar_w, avg_lux |
-| `relay_status` | 릴레이 제어 상태 | relay_name (A/B/C/D), status (on/off) |
-| `trade_history` | 전력 거래 내역 | buyer_id, amount, timestamp |
+| 테이블명            | 설명                    | 주요 컬럼                                 |
+| ------------------- | ----------------------- | ----------------------------------------- |
+| `sun_data_realtime` | 실시간 센서 데이터 저장 | timestamp, soc, solar_w, lux              |
+| `sun_data_hourly`   | 시간별 집계 데이터      | date, hour, avg_soc, avg_solar_w, avg_lux |
+| `relay_status`      | 릴레이 제어 상태        | relay_name (A/B/C/D), status (on/off)     |
+| `trade_history`     | 전력 거래 내역          | buyer_id, amount, timestamp               |
 
 > 📄 전체 SQL 스키마는 `backend/schema.sql`파일을 참고하세요.
 
@@ -326,6 +348,7 @@ npm run build
 ### 3️⃣ 아두이노 설정 (선택사항)
 
 아두이노 센서 연동을 위해서는 별도의 펌웨어 업로드가 필요합니다.
+
 - 조도 센서 (Analog Pin)
 - 전압 센서 (Analog Pin)
 - 4채널 릴레이 모듈 (Digital Pin)
@@ -337,11 +360,14 @@ npm run build
 ### 주요 기술적 도전 과제
 
 #### 1. 아두이노 버퍼 오버플로우 문제
+
 **문제**: 아두이노가 `/api/relay/control` 엔드포인트에서 JSON 응답을 받지 못함
+
 - 기존 응답 형식: `{"A": true, "B": false, "C": true, "D": false}`
 - 아두이노의 제한된 메모리로 인해 HTTP 응답 버퍼 오버플로우 발생
 
 **해결**:
+
 ```python
 # 릴레이 상태를 간결한 문자열로 변환
 # True → "1", False → "0"
@@ -351,16 +377,20 @@ return "1010"  # A=on, B=off, C=on, D=off
 WSGIRequestHandler.server_version = "S"
 WSGIRequestHandler.sys_version = ""
 ```
+
 - JSON 대신 4자리 문자열(`"1010"`)로 단순화
 - 서버 헤더 최소화로 HTTP 응답 크기 대폭 감소
 - 아두이노 메모리 사용량 최적화 성공
 
 #### 2. DB 연결 코드 중복 문제
+
 **문제**: 모든 API 엔드포인트에서 DB 연결/종료 코드가 반복됨
+
 - 연결 실패 처리, 커밋/롤백, 에러 핸들링 로직이 분산
 - 코드 유지보수성 저하 및 실수 가능성 증가
 
 **해결**: Context Manager 패턴 적용
+
 ```python
 @contextmanager
 def db_transaction():
@@ -384,14 +414,17 @@ with db_transaction() as (conn, cursor):
     cursor.execute("SELECT * FROM sensor_data")
     data = cursor.fetchall()
 ```
+
 - 모든 엔드포인트에서 `with db_transaction()` 한 줄로 재사용
 - 자동 커밋/롤백으로 트랜잭션 안정성 보장
 - 코드 가독성 및 유지보수성 향상
 
 #### 3. 머신러닝 모델 선택
+
 **고려한 모델**: RandomForest (RF), GradientBoosting (GB), LSTM
 
 **RandomForest 선택 이유**:
+
 - **빠른 예측 속도**: 실시간 API 응답에 적합
 - **가벼운 모델 크기**: 서버 메모리 효율적 (pickle 파일 약 1MB)
 - **데이터 특성에 적합**: 태양광 발전량은 일정한 주기 패턴을 가진 데이터
@@ -402,11 +435,13 @@ with db_transaction() as (conn, cursor):
 - **특성 중요도 분석 가능**: 어떤 변수가 예측에 중요한지 해석 가능
 
 **비교 결과**:
+
 - **LSTM**: 복잡한 시계열 패턴 학습 가능하지만, 규칙적인 태양광 데이터에서는 오히려 과적합 발생 및 예측 속도 느림
 - **GradientBoosting**: 정확도는 유사하나 학습 시간이 길고 하이퍼파라미터 튜닝 복잡
 - **RandomForest**: 단순하면서도 충분한 성능, 빠른 추론 속도
 
 **최종 하이퍼파라미터**:
+
 ```python
 {
   "n_estimators": 100,
@@ -421,6 +456,7 @@ with db_transaction() as (conn, cursor):
 ## 🏆 성과 및 배운 점
 
 ### 프로젝트 성과
+
 - ✅ **End-to-End IoT 시스템 구축**: 하드웨어-백엔드-프론트엔드 완전 통합
 - ✅ **ML 모델 실전 배포**: RandomForest 모델을 Flask API로 서빙
 - ✅ **실시간 데이터 파이프라인**: 센서 수집 → DB 저장 → 웹 시각화 (10초 주기)
@@ -437,12 +473,12 @@ with db_transaction() as (conn, cursor):
 
 ## 👥 팀원 구성
 
-|  | 오왕경 | 안태현 | 이민정 | 윤태훈 | 최하연 |
-|:---:|:---:|:---:|:---:|:---:|:---:|
-| **역할** | 팀장 / Frontend | ML Engineer / Backend | Backend | Hardware | Hardware |
-| **담당 업무** | React UI/UX 설계<br/>실시간 차트 구현<br/>반응형 디자인 | RandomForest 예측 모델<br/>데이터 전처리<br/>Flask REST API 구현 | Oracle 서버 구축<br/>MySQL 설계<br/>서버 인프라 관리 | 아두이노 센서 회로<br/>릴레이 제어<br/>HW-SW 통신 | 아두이노 센서 회로<br/>릴레이 제어<br/>HW-SW 통신 |
-| **GitHub** | [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/Q5dis) | [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/taehyunan-99) | [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/naas0523) | [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/taehun96) | [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/choi-hayeonn) |
-| **Email** | qowkqowk@gmail.com | withblua@gmail.com | naas0523@gmail.com | yun47873160@gmail.com | gkdus011020@gmail.com |
+|               |                                                          오왕경                                                          |                                                             안태현                                                              |                                                           이민정                                                            |                                                           윤태훈                                                            |                                                             최하연                                                              |
+| :-----------: | :----------------------------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------------------------------: |
+|   **역할**    |                                                     팀장 / Frontend                                                      |                                                      ML Engineer / Backend                                                      |                                                           Backend                                                           |                                                          Hardware                                                           |                                                            Hardware                                                             |
+| **담당 업무** |                                 React UI/UX 설계<br/>실시간 차트 구현<br/>반응형 디자인                                  |                                RandomForest 예측 모델<br/>데이터 전처리<br/>Flask REST API 구현                                 |                                    Oracle 서버 구축<br/>MySQL 설계<br/>서버 인프라 관리                                     |                                      아두이노 센서 회로<br/>릴레이 제어<br/>HW-SW 통신                                      |                                        아두이노 센서 회로<br/>릴레이 제어<br/>HW-SW 통신                                        |
+|  **GitHub**   | [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/Q5dis) | [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/taehyunan-99) | [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/naas0523) | [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/taehun96) | [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/choi-hayeonn) |
+|   **Email**   |                                                    qowkqowk@gmail.com                                                    |                                                       withblua@gmail.com                                                        |                                                     naas0523@gmail.com                                                      |                                                    yun47873160@gmail.com                                                    |                                                      gkdus011020@gmail.com                                                      |
 
 ---
 
@@ -451,6 +487,7 @@ with db_transaction() as (conn, cursor):
 본 프로젝트는 다음 공개 데이터를 활용하여 개발되었습니다.
 
 - **공공데이터포털 API**: 시간별 태양광 패널 발전량 데이터
+
   - 제공: 행정안전부 공공데이터포털
   - 용도: RandomForest 모델 학습 및 발전량 예측
 
